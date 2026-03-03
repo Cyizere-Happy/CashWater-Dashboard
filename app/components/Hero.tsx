@@ -13,7 +13,7 @@ export default function Hero({ value }: HeroProps) {
     <motion.header
       initial={{ opacity: 0, y: -30 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6, ease: "easeOut" }}
+      transition={{ duration: 0.6 }}
       className="bg-[var(--accent-orange)] dark:bg-[var(--bg-header)] px-16 py-8 flex justify-between items-center text-white rounded-b-3xl relative mb-12 shadow-[0_10px_30px_rgba(57,108,184,0.2)]"
     >
       <motion.div

@@ -129,7 +129,7 @@ export default function EnvironmentalChart({
     <motion.div
       initial={{ opacity: 0, y: 25 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.3, duration: 0.6, ease: "easeOut" }}
+      transition={{ delay: 0.3, duration: 0.6 }}
       className="bg-[var(--bg-card)] rounded-3xl p-8 shadow-[var(--card-shadow)] border border-[var(--border-color)] flex-1"
     >
       <div className="flex justify-between items-center mb-6">
