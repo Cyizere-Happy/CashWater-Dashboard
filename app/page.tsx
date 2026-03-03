@@ -11,9 +11,10 @@ import { useMQTT } from './hooks/useMQTT';
 export default function Home() {
   const {
     isConnected,
-    temperature,
-    humidity,
-    ledState,
+    revenueTarget,
+    households,
+    revenue,
+    anomalies,
     mqttMessage,
     lastHeartbeat,
     sendLedCommand,
@@ -23,19 +24,19 @@ export default function Home() {
     <div className="min-h-screen pb-10">
       <Navbar isConnected={isConnected} />
 
-      <Hero temperature={temperature} />
+      <Hero value={revenueTarget} />
 
       <main className="px-16 mt-20 grid grid-cols-[280px_1fr_340px] gap-8 items-start max-[1200px]:grid-cols-1">
         <MetricsSidebar
-          humidity={humidity}
-          ledState={ledState}
-          onLedToggle={sendLedCommand}
+          households={households}
+          anomalies={anomalies}
+          onSyncAI={sendLedCommand}
         />
 
         <div className="flex flex-col gap-8">
           <EnvironmentalChart
-            temperature={temperature}
-            humidity={humidity}
+            revenue={revenue}
+            consumption={null}
           />
           <EventFeed
             lastHeartbeat={lastHeartbeat}

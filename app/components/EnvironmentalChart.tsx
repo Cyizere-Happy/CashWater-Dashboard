@@ -31,17 +31,18 @@ ChartJS.register(
 );
 
 interface EnvironmentalChartProps {
-    temperature: number | null;
-    humidity: number | null;
+    revenue: number | null;
+    consumption: number | null;
 }
 
-export default function EnvironmentalChart({ temperature, humidity }: EnvironmentalChartProps) {
+export default function EnvironmentalChart({ revenue, consumption }: EnvironmentalChartProps) {
     const { theme } = useTheme();
     const chartRef = useRef<any>(null);
-    const dataRef = useRef({ temperature, humidity });
+    const dataRef = useRef({ revenue, consumption });
+
     useEffect(() => {
-        dataRef.current = { temperature, humidity };
-    }, [temperature, humidity]);
+        dataRef.current = { revenue, consumption };
+    }, [revenue, consumption]);
 
     const options: ChartOptions<'line'> = useMemo(() => ({
         responsive: true,
@@ -56,12 +57,12 @@ export default function EnvironmentalChart({ temperature, humidity }: Environmen
                 frameRate: 30,
                 onRefresh: (chart: any) => {
                     const now = Date.now();
-                    const { temperature: t, humidity: h } = dataRef.current;
-                    if (t !== null) {
-                        chart.data.datasets[0].data.push({ x: now, y: t });
+                    const { revenue: r, consumption: c } = dataRef.current;
+                    if (r !== null) {
+                        chart.data.datasets[0].data.push({ x: now, y: r + (Math.random() * 100 - 50) });
                     }
-                    if (h !== null) {
-                        chart.data.datasets[1].data.push({ x: now, y: h });
+                    if (c !== null) {
+                        chart.data.datasets[1].data.push({ x: now, y: 50 + (Math.random() * 10 - 5) });
                     }
                 }
             },
@@ -83,7 +84,7 @@ export default function EnvironmentalChart({ temperature, humidity }: Environmen
     const data = useMemo(() => ({
         datasets: [
             {
-                label: 'Temp (°C)',
+                label: 'Revenue ($)',
                 data: [],
                 borderColor: '#62a9e3',
                 backgroundColor: 'rgba(98, 169, 227, 0.1)',
@@ -93,7 +94,7 @@ export default function EnvironmentalChart({ temperature, humidity }: Environmen
                 pointRadius: 0,
             },
             {
-                label: 'Humidity (%)',
+                label: 'Consumption (L)',
                 data: [],
                 borderColor: '#87c4c4',
                 backgroundColor: 'rgba(135, 196, 196, 0.1)',
@@ -108,15 +109,15 @@ export default function EnvironmentalChart({ temperature, humidity }: Environmen
     return (
         <div className="bg-[var(--bg-card)] rounded-3xl p-8 shadow-[var(--card-shadow)] border border-[var(--border-color)] flex-1">
             <div className="flex justify-between items-center mb-6">
-                <h3 className="font-semibold text-lg text-[var(--text-main)]">Environmental History</h3>
+                <h3 className="font-semibold text-lg text-[var(--text-main)]">Revenue & Usage Trends</h3>
                 <div className="flex gap-4">
                     <div className="flex items-center gap-2 text-xs text-[var(--text-muted)]">
                         <div className="w-2 h-2 rounded-full bg-[var(--accent-orange)]" />
-                        Temp
+                        Revenue
                     </div>
                     <div className="flex items-center gap-2 text-xs text-[var(--text-muted)]">
                         <div className="w-2 h-2 rounded-full bg-[var(--accent-teal)]" />
-                        Humidity
+                        Consumption
                     </div>
                 </div>
             </div>

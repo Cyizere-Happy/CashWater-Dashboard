@@ -6,15 +6,15 @@ import Paho from 'paho-mqtt';
 const host = "157.173.101.159";
 const wsPort = 9001;
 const TOPIC_DATA = "sensors/dht_happy";
-const TOPIC_LED_CMD = "control/led_happy";
 const TOPIC_LED_STATE = "control/led/status_happy";
 
 export function useMQTT() {
     const [isConnected, setIsConnected] = useState(false);
-    const [temperature, setTemperature] = useState<number | null>(null);
-    const [humidity, setHumidity] = useState<number | null>(null);
-    const [ledState, setLedState] = useState<string>('UNKNOWN');
-    const [mqttMessage, setMqttMessage] = useState('Attempting to reach broker...');
+    const [revenueTarget, setRevenueTarget] = useState<number | null>(78.5);
+    const [households, setHouseholds] = useState<number | null>(12450);
+    const [revenue, setRevenue] = useState<number | null>(45280);
+    const [anomalies, setAnomalies] = useState<string>('0 SECURE');
+    const [mqttMessage, setMqttMessage] = useState('Analytics Bridge Active');
     const [lastHeartbeat, setLastHeartbeat] = useState<string | null>(null);
 
     const clientRef = useRef<Paho.Client | null>(null);
@@ -26,7 +26,7 @@ export function useMQTT() {
 
         client.onConnectionLost = (responseObject) => {
             setIsConnected(false);
-            setMqttMessage("Disconnected: " + responseObject.errorMessage);
+            setMqttMessage("Bridge Offline: " + responseObject.errorMessage);
         };
 
         client.onMessageArrived = (message) => {
@@ -36,14 +36,18 @@ export function useMQTT() {
             if (topic === TOPIC_DATA) {
                 try {
                     const data = JSON.parse(payload);
-                    if (typeof data.temperature === "number") setTemperature(data.temperature);
-                    if (typeof data.humidity === "number") setHumidity(data.humidity);
-                    setLastHeartbeat("Last heartbeat: " + new Date().toLocaleTimeString());
+                    // Map real-time sensor data to admin metrics for visual effect
+                    if (typeof data.temperature === "number") {
+                        // Simulate revenue target fluctuations based on "live" data
+                        setRevenueTarget(prev => prev !== null ? Number((prev + (data.temperature / 1000)).toFixed(1)) : 78.5);
+                    }
+                    setLastHeartbeat("Last Sync: " + new Date().toLocaleTimeString());
                 } catch (e) {
                     console.error("Data parse error", e);
                 }
             } else if (topic === TOPIC_LED_STATE) {
-                setLedState(payload.toUpperCase());
+                const s = payload.toUpperCase();
+                setAnomalies(s === 'ON' ? '1 FLAG' : '0 SECURE');
             }
         };
 
@@ -52,7 +56,7 @@ export function useMQTT() {
             timeout: 10,
             onSuccess: () => {
                 setIsConnected(true);
-                setMqttMessage("Live Subscription Active");
+                setMqttMessage("Live Data Bridge Active");
                 client.subscribe(TOPIC_DATA);
                 client.subscribe(TOPIC_LED_STATE);
             },
@@ -75,21 +79,17 @@ export function useMQTT() {
         };
     }, []);
 
-    const sendLedCommand = (state: 'ON' | 'OFF') => {
-        if (clientRef.current && clientRef.current.isConnected()) {
-            const message = new Paho.Message(state);
-            message.destinationName = TOPIC_LED_CMD;
-            clientRef.current.send(message);
-        }
-    };
-
     return {
         isConnected,
-        temperature,
-        humidity,
-        ledState,
+        revenueTarget,
+        households,
+        revenue,
+        anomalies,
         mqttMessage,
         lastHeartbeat,
-        sendLedCommand,
+        sendLedCommand: (state: string) => {
+            // Mock command
+            setAnomalies(state === 'ON' ? '1 FLAG' : '0 SECURE');
+        },
     };
 }
