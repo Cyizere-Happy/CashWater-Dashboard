@@ -10,7 +10,7 @@ export default function AnalyticsSidebar() {
 
                 <div className="flex flex-col gap-4">
                     <div className="flex items-center gap-4 py-4 border-b border-[var(--border-color)]">
-                        <div className="w-10 h-10 rounded-xl bg-[var(--bg-page)] flex items-center justify-center text-blue-400">
+                        <div className="w-10 h-10 rounded-xl bg-[var(--bg-page)] flex items-center justify-center text-[var(--accent-orange)]">
                             <Home size={20} />
                         </div>
                         <div className="flex-1">
@@ -35,7 +35,7 @@ export default function AnalyticsSidebar() {
                 <div className="mt-8 p-6 bg-[var(--bg-page)] rounded-2xl text-center">
                     <p className="text-[10px] text-[var(--text-muted)] mb-1">Revenue Growth</p>
                     <div className="flex items-center justify-center gap-2">
-                        <TrendingUp size={24} className="text-green-500" />
+                        <TrendingUp size={24} className="text-[var(--accent-orange)]" />
                         <h2 className="text-2xl font-bold text-[var(--text-main)]">+12.4%</h2>
                     </div>
                 </div>

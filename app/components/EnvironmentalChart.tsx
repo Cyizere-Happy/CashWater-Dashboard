@@ -86,8 +86,8 @@ export default function EnvironmentalChart({ revenue, consumption }: Environment
             {
                 label: 'Revenue ($)',
                 data: [],
-                borderColor: '#62a9e3',
-                backgroundColor: 'rgba(98, 169, 227, 0.1)',
+                borderColor: '#396cb8',
+                backgroundColor: 'rgba(57, 108, 184, 0.1)',
                 fill: true,
                 tension: 0.4,
                 borderWidth: 3,
@@ -96,8 +96,8 @@ export default function EnvironmentalChart({ revenue, consumption }: Environment
             {
                 label: 'Consumption (L)',
                 data: [],
-                borderColor: '#87c4c4',
-                backgroundColor: 'rgba(135, 196, 196, 0.1)',
+                borderColor: '#4b89c9',
+                backgroundColor: 'rgba(75, 137, 201, 0.1)',
                 fill: true,
                 tension: 0.4,
                 borderWidth: 3,

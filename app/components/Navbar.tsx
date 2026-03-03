@@ -48,11 +48,11 @@ export default function Navbar({ isConnected }: NavbarProps) {
 
                 <div
                     className={`px-4 py-2 rounded-full flex items-center gap-2 text-sm backdrop-blur-md border border-white/30 transition-all ${isConnected
-                        ? 'bg-green-500/10 text-green-500 shadow-[0_0_10px_rgba(34,197,94,0.3)]'
+                        ? 'bg-[var(--accent-orange)]/10 text-[var(--accent-orange)] shadow-[0_0_10px_rgba(57,108,184,0.3)]'
                         : 'bg-red-500/10 text-red-500'
                         }`}
                 >
-                    <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
+                    <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-[var(--accent-orange)]' : 'bg-red-500'}`} />
                     {isConnected ? 'Connected' : 'Disconnected'}
                 </div>
 

@@ -5,11 +5,12 @@
 :root {
   --bg-page: #f8fafc;
   --bg-card: #ffffff;
-  --bg-header: #62a9e3;
+  --bg-header: #396cb8;
   --text-main: #1e293b;
   --text-muted: #64748b;
-  --accent-orange: #62a9e3;
-  --accent-teal: #87c4c4;
+  --accent-orange: #396cb8;
+  --accent-teal: #4b89c9;
+  --accent-light: #e6f0f9;
   --accent-pink: #eb807d;
   --border-color: #e2e8f0;
   --card-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);

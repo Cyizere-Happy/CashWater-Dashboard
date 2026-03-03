@@ -12,16 +12,16 @@ export default function DevicesPage() {
     const { isConnected, publishMessage } = useMQTT();
 
     const folders = [
-        { title: 'Residential', itemCount: 1240, color: '#62a9e3' },
-        { title: 'Commercial', itemCount: 450, color: '#87c4c4' },
-        { title: 'Industrial', itemCount: 120, color: '#eb807d' },
+        { title: 'Residential', itemCount: 1240, color: 'var(--accent-orange)' },
+        { title: 'Commercial', itemCount: 450, color: 'var(--accent-orange)' },
+        { title: 'Industrial', itemCount: 120, color: 'var(--accent-orange)' },
     ];
 
     const [devices, setDevices] = useState([
-        { name: 'Kigali Main Meter', type: 'Flow Sensor', date: '21.03.2024', status: '.active', color: '#62a9e3' },
-        { name: 'Nyamirambo Node 4', type: 'Pressure Valve', date: '20.03.2024', status: '.standby', color: '#87c4c4' },
-        { name: 'Kimironko Hub', type: 'Smart Meter', date: '20.03.2024', status: '.active', color: '#eb807d' },
-        { name: 'Gikondo Pump', type: 'Heavy Duty', date: '12.01.2024', status: '.offline', color: '#64748b' },
+        { name: 'Kigali Main Meter', type: 'Flow Sensor', date: '21.03.2024', status: '.active', color: 'var(--accent-orange)' },
+        { name: 'Nyamirambo Node 4', type: 'Pressure Valve', date: '20.03.2024', status: '.standby', color: 'var(--accent-orange)' },
+        { name: 'Kimironko Hub', type: 'Smart Meter', date: '20.03.2024', status: '.active', color: 'var(--accent-orange)' },
+        { name: 'Gikondo Pump', type: 'Heavy Duty', date: '12.01.2024', status: '.offline', color: 'var(--text-muted)' },
     ]);
 
     const handleToggleSupply = (deviceName: string, isCutOff: boolean) => {
@@ -55,16 +55,16 @@ export default function DevicesPage() {
 
                         <div className="h-10 w-[1px] bg-[var(--border-color)]" />
 
-                        <div className="flex items-center gap-3 px-4 py-2 bg-blue-500/10 rounded-xl border border-blue-500/20">
-                            <QrCode className="text-blue-500" size={20} />
-                            <span className="text-xs font-bold text-blue-500 uppercase tracking-wider">Mobile QR Sync Active</span>
+                        <div className="flex items-center gap-3 px-4 py-2 bg-[var(--accent-orange)]/10 rounded-xl border border-[var(--accent-orange)]/20">
+                            <QrCode className="text-[var(--accent-orange)]" size={20} />
+                            <span className="text-xs font-bold text-[var(--accent-orange)] uppercase tracking-wider">Mobile QR Sync Active</span>
                         </div>
                     </div>
 
                     <div className="flex items-center gap-4">
                         <div className="text-right mr-4">
                             <p className="text-[10px] text-[var(--text-muted)] font-bold uppercase">System Auth</p>
-                            <p className="text-xs font-bold text-green-500">ADMIN SECURE</p>
+                            <p className="text-xs font-bold text-[var(--accent-orange)]">ADMIN SECURE</p>
                         </div>
                         <button className="px-8 py-4 bg-[var(--accent-orange)] text-white font-bold rounded-2xl shadow-xl shadow-[var(--accent-orange)]/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-3">
                             <QrCode size={20} />
@@ -126,11 +126,11 @@ export default function DevicesPage() {
                             </div>
                             <div className="grid grid-cols-6 gap-4">
                                 {[1, 2, 3, 4, 5, 6].map((i) => (
-                                    <div key={i} className="bg-[var(--bg-card)] rounded-2xl p-4 border border-[var(--border-color)] flex flex-col items-center justify-center gap-3 aspect-square hover:scale-105 transition-all cursor-pointer">
-                                        <div className="w-10 h-10 rounded-lg bg-[var(--bg-page)] border border-[var(--border-color)] flex items-center justify-center text-[var(--text-muted)]">
+                                    <div key={i} className="bg-[var(--bg-card)] rounded-2xl p-4 border border-[var(--border-color)] flex flex-col items-center justify-center gap-3 aspect-square hover:scale-105 transition-all cursor-pointer shadow-sm hover:border-[var(--accent-orange)]/30">
+                                        <div className="w-10 h-10 rounded-lg bg-[var(--accent-light)] flex items-center justify-center text-[var(--accent-orange)]">
                                             <LayoutGrid size={20} />
                                         </div>
-                                        <p className="text-[10px] font-bold text-[var(--text-muted)] truncate w-full text-center">Node_{i}</p>
+                                        <p className="text-[10px] font-bold text-[var(--accent-orange)] truncate w-full text-center">Node_{i}</p>
                                     </div>
                                 ))}
                             </div>

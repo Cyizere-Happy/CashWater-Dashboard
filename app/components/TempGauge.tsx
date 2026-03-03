@@ -7,8 +7,8 @@ interface WaterGaugeProps {
 }
 
 export default function WaterGauge({ value }: WaterGaugeProps) {
-    const [offset, setOffset] = useState(565.48); // 2 * PI * 90
-    const circumference = 2 * Math.PI * 90;
+    const [offset, setOffset] = useState(326.73); // 2 * PI * 52
+    const circumference = 2 * Math.PI * 52;
 
     useEffect(() => {
         if (value !== null) {
@@ -21,24 +21,24 @@ export default function WaterGauge({ value }: WaterGaugeProps) {
     }, [value, circumference]);
 
     return (
-        <div className="relative w-[240px] h-[240px] mx-auto bg-white dark:bg-[#1e293b] rounded-full flex flex-col items-center justify-center shadow-2xl border-8 border-white/50 dark:border-slate-800/50">
-            <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 200 200">
+        <div className="relative w-[140px] h-[140px] mx-auto bg-white rounded-full flex flex-col items-center justify-center shadow-xl border-4 border-[#396cb8]/10">
+            <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 120 120">
                 <circle
-                    stroke="var(--bg-page)"
-                    strokeWidth="12"
+                    stroke="#f1f5f9"
+                    strokeWidth="8"
                     fill="transparent"
-                    r="90"
-                    cx="100"
-                    cy="100"
+                    r="52"
+                    cx="60"
+                    cy="60"
                 />
                 <circle
                     stroke="var(--accent-orange)"
-                    strokeWidth="12"
+                    strokeWidth="8"
                     strokeLinecap="round"
                     fill="transparent"
-                    r="90"
-                    cx="100"
-                    cy="100"
+                    r="52"
+                    cx="60"
+                    cy="60"
                     style={{
                         strokeDasharray: circumference,
                         strokeDashoffset: offset,
@@ -46,10 +46,10 @@ export default function WaterGauge({ value }: WaterGaugeProps) {
                     }}
                 />
             </svg>
-            <div className="text-[var(--accent-orange)] font-bold text-5xl leading-none">
+            <div className="text-[var(--accent-orange)] font-bold text-2xl leading-none">
                 {value !== null ? value.toFixed(1) : '--'}%
             </div>
-            <div className="text-slate-400 text-[10px] uppercase tracking-widest mt-2 font-semibold">
+            <div className="text-slate-400 text-[6px] uppercase tracking-widest mt-1 font-semibold">
                 Revenue Target
             </div>
         </div>

@@ -4,9 +4,9 @@ import { Search, ChevronRight } from 'lucide-react';
 
 export default function DevicesSidebar() {
     const stats = [
-        { label: 'Uptime', value: 98, sublabel: 'this week', color: '#62a9e3' },
-        { label: 'Cloud Space', value: 12, sublabel: 'gb left', color: '#87c4c4' },
-        { label: 'Shared Devices', value: 49, sublabel: 'today', color: '#eb807d' },
+        { label: 'Uptime', value: 98, sublabel: 'this week', color: 'var(--accent-orange)' },
+        { label: 'Cloud Space', value: 12, sublabel: 'gb left', color: 'var(--accent-orange)' },
+        { label: 'Shared Devices', value: 49, sublabel: 'today', color: 'var(--accent-orange)' },
     ];
 
     return (

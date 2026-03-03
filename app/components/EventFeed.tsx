@@ -20,7 +20,7 @@ export default function EventFeed({ lastHeartbeat, mqttMessage }: EventFeedProps
                         <h4 className="text-sm font-semibold text-[var(--text-main)]">AI Integrity Scan</h4>
                         <p className="text-[10px] text-[var(--text-muted)]">{lastHeartbeat || 'Waiting for sync...'}</p>
                     </div>
-                    <div className="text-[10px] font-bold text-green-500">ACTIVE</div>
+                    <div className="text-[10px] font-bold text-[var(--accent-orange)]">ACTIVE</div>
                 </div>
 
                 <div className="flex items-center gap-4 py-4">
@@ -32,7 +32,7 @@ export default function EventFeed({ lastHeartbeat, mqttMessage }: EventFeedProps
                         <p className="text-[10px] text-[var(--text-muted)]">{mqttMessage}</p>
                     </div>
                     {mqttMessage.includes('Active') && (
-                        <div className="text-green-500">
+                        <div className="text-[var(--accent-orange)]">
                             <CheckCircle2 size={16} />
                         </div>
                     )}

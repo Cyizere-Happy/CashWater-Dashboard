@@ -9,24 +9,24 @@ interface HeroProps {
 
 export default function Hero({ value }: HeroProps) {
     return (
-        <header className="bg-[var(--accent-orange)] dark:bg-[var(--bg-header)] px-16 pt-12 pb-24 flex justify-between items-center text-white rounded-b-[60px] relative mb-8 shadow-[0_10px_30px_rgba(98,169,227,0.2)]">
+        <header className="bg-[var(--accent-orange)] dark:bg-[var(--bg-header)] px-16 py-8 flex justify-between items-center text-white rounded-b-3xl relative mb-12 shadow-[0_10px_30px_rgba(57,108,184,0.2)]">
             <div className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-full bg-white/30 flex items-center justify-center border-2 border-white">
-                    <User size={32} />
+                <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center border border-white/40">
+                    <User size={24} />
                 </div>
                 <div>
-                    <h2 className="text-sm opacity-90 font-light">Good Morning,</h2>
-                    <h1 className="text-2xl font-bold">Cyizere</h1>
+                    <h2 className="text-xs opacity-80 font-light">Good Morning,</h2>
+                    <h1 className="text-xl font-bold">Cyizere</h1>
                 </div>
             </div>
 
-            <div className="absolute left-1/2 -bottom-16 -translate-x-1/2 z-10">
+            <div className="absolute left-1/2 -bottom-14 -translate-x-1/2 z-10">
                 <WaterGauge value={value} />
             </div>
 
             <div className="text-right">
-                <p className="text-[10px] opacity-80 uppercase tracking-widest mb-1">Water Quality</p>
-                <h1 className="text-4xl font-bold">Healthy</h1>
+                <p className="text-[9px] opacity-70 uppercase tracking-widest mb-0.5">Water Quality</p>
+                <h1 className="text-3xl font-bold">Healthy</h1>
             </div>
         </header>
     );

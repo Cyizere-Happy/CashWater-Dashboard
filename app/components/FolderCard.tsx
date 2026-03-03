@@ -42,7 +42,7 @@ export default function FolderCard({ title, itemCount, color }: FolderCardProps)
                     <div
                         key={i}
                         className="w-7 h-7 rounded-full border-2 border-[var(--bg-card)] bg-[var(--bg-page)] flex items-center justify-center text-[9px] font-bold shadow-sm"
-                        style={{ backgroundColor: i % 2 === 0 ? '#62a9e315' : '#87c4c415' }}
+                        style={{ backgroundColor: i % 2 === 0 ? 'var(--accent-orange)' : 'var(--accent-teal)', opacity: 0.15 }}
                     >
                         {String.fromCharCode(64 + i)}
                     </div>

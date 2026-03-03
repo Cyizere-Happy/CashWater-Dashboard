@@ -41,8 +41,9 @@ export default function DeviceListRow({ name, type, date, status, iconColor, onT
 
             <div className="flex-[0.5] text-right">
                 <span className={`text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-tighter ${isOff ? 'bg-red-500 text-white' :
-                        status === '.active' ? 'bg-green-500/10 text-green-500' :
-                            'bg-gray-500/10 text-gray-500'
+                    status === '.active' ? 'bg-[var(--accent-orange)]/10 text-[var(--accent-orange)]' :
+                        status === '.standby' ? 'bg-[var(--accent-orange)]/20 text-[var(--accent-orange)]' :
+                            'bg-[var(--accent-light)] text-[var(--accent-orange)]'
                     }`}>
                     {status.replace('.', '')}
                 </span>
@@ -56,8 +57,8 @@ export default function DeviceListRow({ name, type, date, status, iconColor, onT
                             onToggleSupply(name, !isOff);
                         }}
                         className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all active:scale-95 shadow-sm ${isOff
-                                ? 'bg-green-500 text-white hover:bg-green-600'
-                                : 'bg-red-500 text-white hover:bg-red-600'
+                            ? 'bg-green-500 text-white hover:bg-green-600'
+                            : 'bg-red-500 text-white hover:bg-red-600'
                             }`}
                     >
                         {isOff ? 'RESTORE' : 'CUT OFF'}

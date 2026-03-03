@@ -28,8 +28,8 @@ export default function MetricsSidebar({ households, anomalies, onSyncAI }: Metr
                     <button
                         onClick={() => onSyncAI('ON')}
                         className={`flex flex-col items-center gap-2 p-6 rounded-2xl font-bold transition-all border ${anomalies.includes('FLAG')
-                                ? 'bg-red-500 text-white border-red-500 shadow-lg shadow-red-500/30'
-                                : 'bg-[var(--bg-page)] text-[var(--text-main)] border-[var(--border-color)]'
+                            ? 'bg-red-500 text-white border-red-500 shadow-lg shadow-red-500/30'
+                            : 'bg-[var(--accent-light)] text-[var(--accent-orange)] border-[var(--accent-orange)]/20'
                             }`}
                     >
                         <Power size={24} />
@@ -38,8 +38,8 @@ export default function MetricsSidebar({ households, anomalies, onSyncAI }: Metr
                     <button
                         onClick={() => onSyncAI('OFF')}
                         className={`flex flex-col items-center gap-2 p-6 rounded-2xl font-bold transition-all border ${anomalies.includes('SECURE')
-                                ? 'bg-green-500 text-white border-green-500 shadow-lg'
-                                : 'bg-[var(--bg-page)] text-[var(--text-main)] border-[var(--border-color)]'
+                            ? 'bg-[var(--accent-orange)] text-white border-[var(--accent-orange)] shadow-lg shadow-[var(--accent-orange)]/30'
+                            : 'bg-[var(--bg-page)] text-[var(--text-main)] border-[var(--border-color)]'
                             }`}
                     >
                         <CircleSlash size={24} />
@@ -48,7 +48,7 @@ export default function MetricsSidebar({ households, anomalies, onSyncAI }: Metr
                 </div>
                 <div className="mt-6 text-center">
                     <span className="text-[10px] text-[var(--text-muted)]">System State: </span>
-                    <strong className={`text-[10px] uppercase ${anomalies.includes('FLAG') ? 'text-red-500' : 'text-green-500'}`}>{anomalies}</strong>
+                    <strong className={`text-[10px] uppercase ${anomalies.includes('FLAG') ? 'text-red-500' : 'text-[var(--accent-orange)]'}`}>{anomalies}</strong>
                 </div>
             </div>
         </div>
