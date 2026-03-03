@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useTheme } from 'next-themes';
 import { useEffect, useState } from 'react';
 import { Moon, Sun, Hexagon, Wifi, WifiOff } from 'lucide-react';
@@ -49,6 +50,13 @@ export default function Navbar({ isConnected }: NavbarProps) {
                     <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
                     {isConnected ? 'Connected' : 'Disconnected'}
                 </div>
+
+                <Link
+                    href="/auth?mode=login"
+                    className="px-6 py-2 rounded-xl bg-[var(--text-main)] text-white text-sm font-bold hover:bg-[var(--accent-orange)] transition-all active:scale-95"
+                >
+                    Login
+                </Link>
             </div>
         </nav>
     );
