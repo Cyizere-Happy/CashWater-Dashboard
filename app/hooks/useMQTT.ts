@@ -79,6 +79,14 @@ export function useMQTT() {
         };
     }, []);
 
+    const publishMessage = (topic: string, message: string) => {
+        if (clientRef.current && isConnected) {
+            const msg = new Paho.Message(message);
+            msg.destinationName = topic;
+            clientRef.current.send(msg);
+        }
+    };
+
     return {
         isConnected,
         revenueTarget,
@@ -88,8 +96,9 @@ export function useMQTT() {
         mqttMessage,
         lastHeartbeat,
         sendLedCommand: (state: string) => {
-            // Mock command
+            publishMessage("control/led/status_happy", state);
             setAnomalies(state === 'ON' ? '1 FLAG' : '0 SECURE');
         },
+        publishMessage,
     };
 }
