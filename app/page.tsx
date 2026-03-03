@@ -1,12 +1,13 @@
-'use client';
+"use client";
 
-import Navbar from './components/Navbar';
-import Hero from './components/Hero';
-import MetricsSidebar from './components/MetricsSidebar';
-import EnvironmentalChart from './components/EnvironmentalChart';
-import EventFeed from './components/EventFeed';
-import AnalyticsSidebar from './components/AnalyticsSidebar';
-import { useMQTT } from './hooks/useMQTT';
+import Navbar from "./components/Navbar";
+import Hero from "./components/Hero";
+import MetricsSidebar from "./components/MetricsSidebar";
+import EnvironmentalChart from "./components/EnvironmentalChart";
+import EventFeed from "./components/EventFeed";
+import AnalyticsSidebar from "./components/AnalyticsSidebar";
+import LeakAlertBanner from "./components/LeakAlertBanner";
+import { useMQTT } from "./hooks/useMQTT";
 
 export default function Home() {
   const {
@@ -34,18 +35,14 @@ export default function Home() {
         />
 
         <div className="flex flex-col gap-8">
-          <EnvironmentalChart
-            revenue={revenue}
-            consumption={null}
-          />
-          <EventFeed
-            lastHeartbeat={lastHeartbeat}
-            mqttMessage={mqttMessage}
-          />
+          <EnvironmentalChart revenue={revenue} consumption={null} />
+          <EventFeed lastHeartbeat={lastHeartbeat} mqttMessage={mqttMessage} />
         </div>
 
         <AnalyticsSidebar />
       </main>
+
+      <LeakAlertBanner />
     </div>
   );
 }
