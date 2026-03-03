@@ -26,9 +26,14 @@ export default function Navbar({ isConnected }: NavbarProps) {
 
             <ul className="flex gap-8 list-none">
                 <li>
-                    <a href="#" className="text-[var(--text-main)] font-semibold border-b-2 border-[var(--accent-orange)] pb-1">
+                    <Link href="/" className="text-[var(--text-main)] font-semibold border-b-2 border-[var(--accent-orange)] pb-1">
                         Dashboard
-                    </a>
+                    </Link>
+                </li>
+                <li>
+                    <Link href="/devices" className="text-[var(--text-muted)] font-semibold hover:text-[var(--text-main)] transition-colors">
+                        Devices
+                    </Link>
                 </li>
             </ul>
 
