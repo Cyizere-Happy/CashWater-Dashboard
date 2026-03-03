@@ -1,0 +1,58 @@
+@import "tailwindcss";
+
+@plugin "@tailwindcss/postcss";
+
+:root {
+  --bg-page: #f8fafc;
+  --bg-card: #ffffff;
+  --bg-header: #62a9e3;
+  --text-main: #1e293b;
+  --text-muted: #64748b;
+  --accent-orange: #62a9e3;
+  --accent-teal: #87c4c4;
+  --accent-pink: #eb807d;
+  --border-color: #e2e8f0;
+  --card-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+  --nav-bg: #ffffff;
+  --nav-text: #1e293b;
+}
+
+[data-theme='dark'] {
+  --bg-page: #0f172a;
+  --bg-card: #1e293b;
+  --bg-header: #4b8cc1;
+  --text-main: #f1f5f9;
+  --text-muted: #94a3b8;
+  --accent-orange: #62a9e3;
+  --accent-teal: #87c4c4;
+  --accent-pink: #eb807d;
+  --border-color: #334155;
+  --card-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+  --nav-bg: #1e293b;
+  --nav-text: #f1f5f9;
+}
+
+@theme inline {
+  --color-bg-page: var(--bg-page);
+  --color-bg-card: var(--bg-card);
+  --color-bg-header: var(--bg-header);
+  --color-text-main: var(--text-main);
+  --color-text-muted: var(--text-muted);
+  --color-accent-orange: var(--accent-orange);
+  --color-accent-teal: var(--accent-teal);
+  --color-accent-pink: var(--accent-pink);
+  --color-border-color: var(--border-color);
+  --color-nav-bg: var(--nav-bg);
+  --color-nav-text: var(--nav-text);
+}
+
+body {
+  background-color: var(--bg-page);
+  color: var(--text-main);
+  font-family: 'Outfit', sans-serif;
+  transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+}
+
+* {
+  box-sizing: border-box;
+}

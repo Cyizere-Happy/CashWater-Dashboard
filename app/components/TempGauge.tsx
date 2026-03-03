@@ -1,0 +1,57 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+
+interface WaterGaugeProps {
+    value: number | null;
+}
+
+export default function WaterGauge({ value }: WaterGaugeProps) {
+    const [offset, setOffset] = useState(565.48); // 2 * PI * 90
+    const circumference = 2 * Math.PI * 90;
+
+    useEffect(() => {
+        if (value !== null) {
+            const min = 0;
+            const max = 100;
+            const percent = Math.min(Math.max((value - min) / (max - min), 0), 1) * 100;
+            const newOffset = circumference - (percent / 100) * circumference;
+            setOffset(newOffset);
+        }
+    }, [value, circumference]);
+
+    return (
+        <div className="relative w-[240px] h-[240px] mx-auto bg-white dark:bg-[#1e293b] rounded-full flex flex-col items-center justify-center shadow-2xl border-8 border-white/50 dark:border-slate-800/50">
+            <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 200 200">
+                <circle
+                    stroke="var(--bg-page)"
+                    strokeWidth="12"
+                    fill="transparent"
+                    r="90"
+                    cx="100"
+                    cy="100"
+                />
+                <circle
+                    stroke="var(--accent-orange)"
+                    strokeWidth="12"
+                    strokeLinecap="round"
+                    fill="transparent"
+                    r="90"
+                    cx="100"
+                    cy="100"
+                    style={{
+                        strokeDasharray: circumference,
+                        strokeDashoffset: offset,
+                        transition: 'stroke-dashoffset 0.5s ease-out',
+                    }}
+                />
+            </svg>
+            <div className="text-[var(--accent-orange)] font-bold text-5xl leading-none">
+                {value !== null ? value.toFixed(1) : '--'}%
+            </div>
+            <div className="text-slate-400 text-[10px] uppercase tracking-widest mt-2 font-semibold">
+                Revenue Target
+            </div>
+        </div>
+    );
+}
