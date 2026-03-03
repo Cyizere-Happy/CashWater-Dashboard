@@ -6,10 +6,10 @@ import { useEffect, useState } from "react";
 import { Moon, Sun, Hexagon, Wifi, WifiOff, AlertTriangle } from "lucide-react";
 
 interface NavbarProps {
-  isConnected: boolean;
+  isConnected?: boolean;
 }
 
-export default function Navbar({ isConnected }: NavbarProps) {
+export default function Navbar({ isConnected = false }: NavbarProps) {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 

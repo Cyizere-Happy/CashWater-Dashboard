@@ -1,14 +1,8 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import Link from "next/link";
-import { useTheme } from "next-themes";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Hexagon,
-  Moon,
-  Sun,
-  ArrowLeft,
   AlertTriangle,
   Droplets,
   MapPin,
@@ -20,12 +14,12 @@ import {
   Waves,
   ShieldAlert,
   Search,
-  Plus,
   CheckCircle2,
   XCircle,
   Bell,
 } from "lucide-react";
 import Paho from "paho-mqtt";
+import Navbar from "../components/Navbar";
 
 /* ─── MQTT Config ─── */
 const MQTT_HOST = "157.173.101.159";
@@ -127,7 +121,6 @@ function formatTime(ts: string) {
 }
 
 export default function LeakReportsPage() {
-  const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [reports, setReports] = useState<LeakReport[]>(SEED_REPORTS);
   const [filter, setFilter] = useState<"ALL" | "NEW" | "BLOCKED" | "DISMISSED">(
@@ -270,35 +263,7 @@ export default function LeakReportsPage() {
 
   return (
     <div className="min-h-screen bg-[var(--bg-page)]">
-      {/* ─── Navbar ─── */}
-      <nav className="flex items-center justify-between px-6 md:px-16 py-6 bg-[var(--nav-bg)] border-b border-[var(--border-color)] sticky top-0 z-50">
-        <Link
-          href="/"
-          className="flex items-center gap-3 text-xl font-bold tracking-widest text-[var(--text-main)]"
-        >
-          <Hexagon
-            className="fill-[var(--accent-orange)] text-[var(--accent-orange)]"
-            size={28}
-          />
-          Cash<span className="text-[var(--accent-orange)]">Water</span>.
-        </Link>
-        <div className="flex items-center gap-4">
-          <button
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            className="p-2 text-[var(--text-muted)] hover:text-[var(--text-main)] transition-colors"
-            aria-label="Toggle Theme"
-          >
-            {theme === "dark" ? <Sun size={22} /> : <Moon size={22} />}
-          </button>
-          <Link
-            href="/"
-            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm text-[var(--text-muted)] hover:text-[var(--text-main)] transition-colors"
-          >
-            <ArrowLeft size={16} />
-            Dashboard
-          </Link>
-        </div>
-      </nav>
+      <Navbar />
 
       <div className="max-w-7xl mx-auto px-6 py-8">
         {/* ─── Page Title ─── */}
