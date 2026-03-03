@@ -9,7 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "chart.js": "^4.5.1",
+    "chart.js": "^3.9.1",
     "chartjs-adapter-moment": "^1.0.1",
     "chartjs-plugin-streaming": "^2.0.0",
     "lucide-react": "^0.576.0",

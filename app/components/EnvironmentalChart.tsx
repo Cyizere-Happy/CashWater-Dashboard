@@ -16,7 +16,7 @@ import { Line } from 'react-chartjs-2';
 import StreamingPlugin from 'chartjs-plugin-streaming';
 import 'chartjs-adapter-moment';
 import { useTheme } from 'next-themes';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useMemo } from 'react';
 
 ChartJS.register(
     CategoryScale,
@@ -38,25 +38,15 @@ interface EnvironmentalChartProps {
 export default function EnvironmentalChart({ temperature, humidity }: EnvironmentalChartProps) {
     const { theme } = useTheme();
     const chartRef = useRef<any>(null);
-
+    const dataRef = useRef({ temperature, humidity });
     useEffect(() => {
-        if (chartRef.current && (temperature !== null || humidity !== null)) {
-            const chart = chartRef.current;
-            const now = Date.now();
-            if (temperature !== null) {
-                chart.data.datasets[0].data.push({ x: now, y: temperature });
-            }
-            if (humidity !== null) {
-                chart.data.datasets[1].data.push({ x: now, y: humidity });
-            }
-            chart.update('quiet');
-        }
+        dataRef.current = { temperature, humidity };
     }, [temperature, humidity]);
 
-    const options: ChartOptions<'line'> = {
+    const options: ChartOptions<'line'> = useMemo(() => ({
         responsive: true,
         maintainAspectRatio: false,
-        interaction: { mode: 'nearest', intersect: false },
+        interaction: { mode: 'nearest' as const, intersect: false },
         plugins: {
             legend: { display: false },
             streaming: {
@@ -64,8 +54,18 @@ export default function EnvironmentalChart({ temperature, humidity }: Environmen
                 refresh: 1000,
                 delay: 2000,
                 frameRate: 30,
+                onRefresh: (chart: any) => {
+                    const now = Date.now();
+                    const { temperature: t, humidity: h } = dataRef.current;
+                    if (t !== null) {
+                        chart.data.datasets[0].data.push({ x: now, y: t });
+                    }
+                    if (h !== null) {
+                        chart.data.datasets[1].data.push({ x: now, y: h });
+                    }
+                }
             },
-        } as any, // Streaming plugin options type bypass
+        } as any,
         scales: {
             x: {
                 type: 'realtime' as any,
@@ -78,9 +78,9 @@ export default function EnvironmentalChart({ temperature, humidity }: Environmen
                 ticks: { color: theme === 'dark' ? '#94a3b8' : '#64748b' },
             },
         },
-    };
+    }), [theme]);
 
-    const data = {
+    const data = useMemo(() => ({
         datasets: [
             {
                 label: 'Temp (°C)',
@@ -103,7 +103,7 @@ export default function EnvironmentalChart({ temperature, humidity }: Environmen
                 pointRadius: 0,
             },
         ],
-    };
+    }), []);
 
     return (
         <div className="bg-[var(--bg-card)] rounded-3xl p-8 shadow-[var(--card-shadow)] border border-[var(--border-color)] flex-1">

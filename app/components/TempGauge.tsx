@@ -24,7 +24,7 @@ export default function TempGauge({ temperature }: TempGaugeProps) {
         <div className="relative w-[240px] h-[240px] mx-auto bg-white dark:bg-[#1e293b] rounded-full flex flex-col items-center justify-center shadow-2xl border-8 border-white/50 dark:border-slate-800/50">
             <svg className="absolute top-0 left-0 -rotate-90" width="240" height="240">
                 <circle
-                    stroke="var(--border-color)"
+                    stroke="var(--bg-page)"
                     strokeWidth="12"
                     fill="transparent"
                     r="90"
