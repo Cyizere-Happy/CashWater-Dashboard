@@ -1,45 +1,90 @@
-'use client';
+"use client";
 
-import { Home, Receipt, TrendingUp } from 'lucide-react';
+import { motion } from "framer-motion";
+import { Home, Receipt, TrendingUp } from "lucide-react";
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.12, delayChildren: 0.2 },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, x: 30 },
+  visible: { opacity: 1, x: 0, transition: { duration: 0.5, ease: "easeOut" } },
+};
 
 export default function AnalyticsSidebar() {
-    return (
-        <aside className="w-[340px] flex flex-col gap-8">
-            <div className="bg-[var(--bg-card)] rounded-3xl p-8 shadow-[var(--card-shadow)] border border-[var(--border-color)]">
-                <h3 className="font-semibold text-lg mb-6">Regional Stats</h3>
+  return (
+    <motion.aside
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+      className="w-[340px] flex flex-col gap-8"
+    >
+      <motion.div
+        variants={itemVariants}
+        className="bg-[var(--bg-card)] rounded-3xl p-8 shadow-[var(--card-shadow)] border border-[var(--border-color)]"
+      >
+        <h3 className="font-semibold text-lg mb-6">Regional Stats</h3>
 
-                <div className="flex flex-col gap-4">
-                    <div className="flex items-center gap-4 py-4 border-b border-[var(--border-color)]">
-                        <div className="w-10 h-10 rounded-xl bg-[var(--bg-page)] flex items-center justify-center text-blue-400">
-                            <Home size={20} />
-                        </div>
-                        <div className="flex-1">
-                            <h4 className="text-sm font-semibold text-[var(--text-main)]">Total Properties</h4>
-                            <p className="text-[10px] text-[var(--text-muted)]">Verified Registered</p>
-                        </div>
-                        <div className="font-bold text-sm">15,820</div>
-                    </div>
-
-                    <div className="flex items-center gap-4 py-4 border-b border-[var(--border-color)]">
-                        <div className="w-10 h-10 rounded-xl bg-[var(--bg-page)] flex items-center justify-center text-red-400">
-                            <Receipt size={20} />
-                        </div>
-                        <div className="flex-1">
-                            <h4 className="text-sm font-semibold text-[var(--text-main)]">Unpaid Bills</h4>
-                            <p className="text-[10px] text-[var(--text-muted)]">Past 30 days</p>
-                        </div>
-                        <div className="font-bold text-sm">421</div>
-                    </div>
-                </div>
-
-                <div className="mt-8 p-6 bg-[var(--bg-page)] rounded-2xl text-center">
-                    <p className="text-[10px] text-[var(--text-muted)] mb-1">Revenue Growth</p>
-                    <div className="flex items-center justify-center gap-2">
-                        <TrendingUp size={24} className="text-green-500" />
-                        <h2 className="text-2xl font-bold text-[var(--text-main)]">+12.4%</h2>
-                    </div>
-                </div>
+        <div className="flex flex-col gap-4">
+          <motion.div
+            whileHover={{ x: 4 }}
+            className="flex items-center gap-4 py-4 border-b border-[var(--border-color)]"
+          >
+            <div className="w-10 h-10 rounded-xl bg-[var(--bg-page)] flex items-center justify-center text-blue-400">
+              <Home size={20} />
             </div>
-        </aside>
-    );
+            <div className="flex-1">
+              <h4 className="text-sm font-semibold text-[var(--text-main)]">
+                Total Properties
+              </h4>
+              <p className="text-[10px] text-[var(--text-muted)]">
+                Verified Registered
+              </p>
+            </div>
+            <div className="font-bold text-sm">15,820</div>
+          </motion.div>
+
+          <motion.div
+            whileHover={{ x: 4 }}
+            className="flex items-center gap-4 py-4 border-b border-[var(--border-color)]"
+          >
+            <div className="w-10 h-10 rounded-xl bg-[var(--bg-page)] flex items-center justify-center text-red-400">
+              <Receipt size={20} />
+            </div>
+            <div className="flex-1">
+              <h4 className="text-sm font-semibold text-[var(--text-main)]">
+                Unpaid Bills
+              </h4>
+              <p className="text-[10px] text-[var(--text-muted)]">
+                Past 30 days
+              </p>
+            </div>
+            <div className="font-bold text-sm">421</div>
+          </motion.div>
+        </div>
+
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.6, duration: 0.5, type: "spring" }}
+          className="mt-8 p-6 bg-[var(--bg-page)] rounded-2xl text-center"
+        >
+          <p className="text-[10px] text-[var(--text-muted)] mb-1">
+            Revenue Growth
+          </p>
+          <div className="flex items-center justify-center gap-2">
+            <TrendingUp size={24} className="text-green-500" />
+            <h2 className="text-2xl font-bold text-[var(--text-main)]">
+              +12.4%
+            </h2>
+          </div>
+        </motion.div>
+      </motion.div>
+    </motion.aside>
+  );
 }

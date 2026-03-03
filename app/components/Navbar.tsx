@@ -1,17 +1,25 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
-import { Moon, Sun, Hexagon, Wifi, WifiOff, AlertTriangle } from "lucide-react";
+import { Moon, Sun, Hexagon, AlertTriangle } from "lucide-react";
 
 interface NavbarProps {
   isConnected?: boolean;
 }
 
+const navLinks = [
+  { href: "/", label: "Dashboard" },
+  { href: "/devices", label: "Devices" },
+  { href: "/report-leak", label: "Report Leak", isAlert: true },
+];
+
 export default function Navbar({ isConnected = false }: NavbarProps) {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const pathname = usePathname();
 
   useEffect(() => setMounted(true), []);
 
@@ -28,31 +36,26 @@ export default function Navbar({ isConnected = false }: NavbarProps) {
       </div>
 
       <ul className="flex gap-8 list-none">
-        <li>
-          <Link
-            href="/"
-            className="text-[var(--text-main)] font-semibold border-b-2 border-[var(--accent-orange)] pb-1"
-          >
-            Dashboard
-          </Link>
-        </li>
-        <li>
-          <Link
-            href="/devices"
-            className="text-[var(--text-muted)] font-semibold hover:text-[var(--text-main)] transition-colors"
-          >
-            Devices
-          </Link>
-        </li>
-        <li>
-          <Link
-            href="/report-leak"
-            className="text-[var(--accent-pink)] font-semibold hover:opacity-80 transition-all flex items-center gap-1.5"
-          >
-            <AlertTriangle size={15} />
-            Report Leak
-          </Link>
-        </li>
+        {navLinks.map((link) => {
+          const isActive = pathname === link.href;
+          return (
+            <li key={link.href}>
+              <Link
+                href={link.href}
+                className={`font-semibold transition-all flex items-center gap-1.5 pb-1 ${
+                  isActive
+                    ? "text-[var(--text-main)] border-b-2 border-[var(--accent-orange)]"
+                    : link.isAlert
+                      ? "text-[var(--accent-pink)] hover:opacity-80 border-b-2 border-transparent"
+                      : "text-[var(--text-muted)] hover:text-[var(--text-main)] border-b-2 border-transparent"
+                }`}
+              >
+                {link.isAlert && <AlertTriangle size={15} />}
+                {link.label}
+              </Link>
+            </li>
+          );
+        })}
       </ul>
 
       <div className="flex items-center gap-6">
