@@ -1,6 +1,6 @@
 'use client';
 
-import { FileText, MoreHorizontal, Plus, Share2 } from 'lucide-react';
+import { FileText, MapPin, MoreHorizontal, Plus, Share2 } from 'lucide-react';
 
 interface DeviceListRowProps {
     name: string;
@@ -8,11 +8,13 @@ interface DeviceListRowProps {
     date: string;
     status: string;
     iconColor: string;
+    location?: string;
+    coordinates?: [number, number];
     onToggleSupply?: (name: string, isOff: boolean) => void;
 }
 
-export default function DeviceListRow({ name, type, date, status, iconColor, onToggleSupply }: DeviceListRowProps) {
-    const isOff = status.toLowerCase() === '.cutoff';
+export default function DeviceListRow({ name, type, date, status, iconColor, location, coordinates, onToggleSupply }: DeviceListRowProps) {
+    const isOff = (status || "").toLowerCase() === '.cutoff';
 
     return (
         <div className={`flex items-center gap-6 py-4 px-6 hover:bg-[var(--bg-page)] rounded-2xl transition-all group cursor-pointer border border-transparent hover:border-[var(--border-color)] ${isOff ? 'opacity-70 bg-red-50/10' : ''}`}>
@@ -26,9 +28,25 @@ export default function DeviceListRow({ name, type, date, status, iconColor, onT
                 )}
             </div>
 
-            <div className="flex-[2]">
-                <h4 className={`font-bold ${isOff ? 'text-red-500' : 'text-[var(--text-main)]'}`}>{name}</h4>
-                <p className="text-[10px] text-[var(--text-muted)] font-medium">QR_VERIFIED_REG</p>
+            <div className="flex-[2] min-w-0">
+                <div className="flex items-center gap-2">
+                    <h4 className={`font-bold truncate ${isOff ? 'text-red-500' : 'text-[var(--text-main)]'}`}>{name}</h4>
+                    {coordinates && (
+                        <div className="px-1.5 py-0.5 bg-blue-50 text-[8px] text-blue-500 rounded-md font-bold flex items-center gap-0.5">
+                            <MapPin size={8} />
+                            GPS
+                        </div>
+                    )}
+                </div>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                    <p className="text-[10px] text-[var(--text-muted)] font-medium">QR_VERIFIED_REG</p>
+                    {location && (
+                        <>
+                            <div className="w-1 h-1 rounded-full bg-[var(--border-color)]" />
+                            <p className="text-[10px] text-[var(--accent-orange)] font-bold truncate max-w-[120px]">{location}</p>
+                        </>
+                    )}
+                </div>
             </div>
 
             <div className="flex-1">

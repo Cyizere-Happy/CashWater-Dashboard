@@ -1,13 +1,14 @@
 "use client";
 
-import { useState } from "react";
-import { motion } from "framer-motion";
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import Navbar from "../components/Navbar";
 import FolderCard from "../components/FolderCard";
 import DeviceListRow from "../components/DeviceListRow";
 import DevicesSidebar from "../components/DevicesSidebar";
-import { ChevronLeft, ChevronRight, LayoutGrid, QrCode } from "lucide-react";
+import { ChevronLeft, ChevronRight, LayoutGrid, QrCode, X, Copy, Check } from "lucide-react";
 import { useMQTT } from "../hooks/useMQTT";
+import { QRCodeCanvas } from "qrcode.react";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -35,36 +36,93 @@ export default function DevicesPage() {
     { title: "Industrial", itemCount: 120, color: "var(--accent-orange)" },
   ];
 
-  const [devices, setDevices] = useState([
-    {
-      name: "Kigali Main Meter",
-      type: "Flow Sensor",
-      date: "21.03.2024",
-      status: ".active",
-      color: "var(--accent-orange)",
-    },
-    {
-      name: "Nyamirambo Node 4",
-      type: "Pressure Valve",
-      date: "20.03.2024",
-      status: ".standby",
-      color: "var(--accent-orange)",
-    },
-    {
-      name: "Kimironko Hub",
-      type: "Smart Meter",
-      date: "20.03.2024",
-      status: ".active",
-      color: "var(--accent-orange)",
-    },
-    {
-      name: "Gikondo Pump",
-      type: "Heavy Duty",
-      date: "12.01.2024",
-      status: ".offline",
-      color: "var(--text-muted)",
-    },
-  ]);
+  const [devices, setDevices] = useState<any[]>([]);
+
+  const fetchDevices = async () => {
+    const token = localStorage.getItem("admin_token");
+    if (!token) return;
+
+    try {
+      const response = await fetch("http://localhost:3005/devices", {
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      });
+
+      if (response.status === 401) {
+        localStorage.removeItem("admin_token");
+        window.location.href = "/auth";
+        return;
+      }
+
+      const data = await response.json();
+      if (Array.isArray(data)) {
+        setDevices(data.map((d: any) => ({
+          name: d.name || d.id,
+          type: d.type || "Smart Meter",
+          date: d.registrationTimestamp || d.createdAt
+            ? new Date(d.registrationTimestamp || d.createdAt).toLocaleDateString()
+            : "N/A",
+          status: d.isValveBlocked ? ".cutoff" : ".active",
+          location: d.location || "Default",
+          coordinates: d.latitude && d.longitude ? [Number(d.longitude), Number(d.latitude)] : null,
+          color: "var(--accent-orange)",
+        })));
+      }
+    } catch (error) {
+      console.error("Failed to fetch devices:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchDevices();
+    const interval = setInterval(fetchDevices, 5000); // Poll every 5 seconds
+    return () => clearInterval(interval);
+  }, []);
+
+  const [showQrModal, setShowQrModal] = useState(false);
+  const [qrToken, setQrToken] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const handleRegisterNewDevice = async () => {
+    const token = localStorage.getItem("admin_token");
+    if (!token) return;
+
+    setIsLoading(true);
+    try {
+      const response = await fetch("http://localhost:3005/devices/generate-qr", {
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      });
+
+      if (response.status === 401) {
+        localStorage.removeItem("admin_token");
+        window.location.href = "/auth";
+        return;
+      }
+
+      const data = await response.json();
+      if (data.registrationToken) {
+        setQrToken(data.registrationToken);
+        setShowQrModal(true);
+      }
+    } catch (error) {
+      console.error("Failed to generate QR:", error);
+      // For demo purposes, generate a fallback token if backend isn't reachable
+      setQrToken(`CW-${Math.random().toString(16).slice(2, 10).toUpperCase()}`);
+      setShowQrModal(true);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(qrToken);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   const handleToggleSupply = (deviceName: string, isCutOff: boolean) => {
     const command = isCutOff ? "OFF" : "ON";
@@ -123,10 +181,12 @@ export default function DevicesPage() {
             <motion.button
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.95 }}
-              className="px-8 py-4 bg-[var(--accent-orange)] text-white font-bold rounded-2xl shadow-xl shadow-[var(--accent-orange)]/20 transition-all flex items-center gap-3"
+              onClick={handleRegisterNewDevice}
+              disabled={isLoading}
+              className="px-8 py-4 bg-[var(--accent-orange)] text-white font-bold rounded-2xl shadow-xl shadow-[var(--accent-orange)]/20 transition-all flex items-center gap-3 disabled:opacity-50"
             >
               <QrCode size={20} />
-              REGISTER NEW DEVICE
+              {isLoading ? "GENERATING..." : "REGISTER NEW DEVICE"}
             </motion.button>
           </div>
         </motion.div>
@@ -189,72 +249,157 @@ export default function DevicesPage() {
                 transition={{ delay: 0.35, duration: 0.5 }}
                 className="bg-[var(--bg-card)] rounded-[32px] p-4 shadow-[var(--card-shadow)] border border-[var(--border-color)]"
               >
+                {devices.length > 0 ? (
+                  <div className="flex flex-col gap-1">
+                    {devices.map((device, idx) => (
+                      <div key={idx} className="border-b border-black/5 last:border-0">
+                        {/* Render indicator for debug */}
+                        <DeviceListRow
+                          {...device}
+                          location={device.location}
+                          coordinates={device.coordinates}
+                          iconColor={device.color}
+                          onToggleSupply={handleToggleSupply}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="py-12 flex flex-col items-center justify-center text-[var(--text-muted)]">
+                    <LayoutGrid size={48} className="mb-4 opacity-20" />
+                    <p className="text-sm font-medium">No devices registered yet</p>
+                    <p className="text-[10px] mt-1">Use a registration token to add devices via Mobile App</p>
+                  </div>
+                )}
+              </motion.div>
+            </motion.div>
+
+            <div className="mt-8 p-4 bg-black/5 rounded-xl border border-dashed border-black/10 overflow-auto max-h-40">
+              <p className="text-[10px] font-bold mb-2 opacity-50 uppercase tracking-widest">Debug: Device State</p>
+              <pre className="text-[10px] font-mono whitespace-pre text-black/40">
+                {JSON.stringify(devices, null, 2)}
+              </pre>
+            </div>
+
+            <p className="mt-6 text-[10px] text-[var(--text-muted)] text-center italic">
+              * Devices registered via Mobile App QR scan are automatically
+              verified.
+            </p>
+          </section>
+
+          {/* Shared with me Section */}
+          <section>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.45 }}
+              className="flex items-center justify-between mb-8"
+            >
+              <h2 className="text-2xl font-bold">Shared with me</h2>
+              <button className="text-sm font-bold text-[var(--accent-orange)] hover:underline">
+                VIEW ALL
+              </button>
+            </motion.div>
+            <motion.div
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+              className="grid grid-cols-6 gap-4"
+            >
+              {[1, 2, 3, 4, 5, 6].map((i) => (
                 <motion.div
-                  variants={containerVariants}
-                  initial="hidden"
-                  animate="visible"
-                  className="flex flex-col gap-1"
+                  key={i}
+                  variants={itemVariants}
+                  whileHover={{ scale: 1.08, transition: { duration: 0.2 } }}
+                  className="bg-[var(--bg-card)] rounded-2xl p-4 border border-[var(--border-color)] flex flex-col items-center justify-center gap-3 aspect-square cursor-pointer shadow-sm hover:border-[var(--accent-orange)]/30"
                 >
-                  {devices.map((device, idx) => (
-                    <motion.div key={idx} variants={itemVariants}>
-                      <DeviceListRow
-                        {...device}
-                        iconColor={device.color}
-                        onToggleSupply={handleToggleSupply}
-                      />
-                    </motion.div>
-                  ))}
+                  <div className="w-10 h-10 rounded-lg bg-[var(--accent-light)] flex items-center justify-center text-[var(--accent-orange)]">
+                    <LayoutGrid size={20} />
+                  </div>
+                  <p className="text-[10px] font-bold text-[var(--accent-orange)] truncate w-full text-center">
+                    Node_{i}
+                  </p>
                 </motion.div>
-              </motion.div>
-
-              <p className="mt-6 text-[10px] text-[var(--text-muted)] text-center italic">
-                * Devices registered via Mobile App QR scan are automatically
-                verified.
-              </p>
-            </section>
-
-            {/* Shared with me Section */}
-            <section>
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.45 }}
-                className="flex items-center justify-between mb-8"
-              >
-                <h2 className="text-2xl font-bold">Shared with me</h2>
-                <button className="text-sm font-bold text-[var(--accent-orange)] hover:underline">
-                  VIEW ALL
-                </button>
-              </motion.div>
-              <motion.div
-                variants={containerVariants}
-                initial="hidden"
-                animate="visible"
-                className="grid grid-cols-6 gap-4"
-              >
-                {[1, 2, 3, 4, 5, 6].map((i) => (
-                  <motion.div
-                    key={i}
-                    variants={itemVariants}
-                    whileHover={{ scale: 1.08, transition: { duration: 0.2 } }}
-                    className="bg-[var(--bg-card)] rounded-2xl p-4 border border-[var(--border-color)] flex flex-col items-center justify-center gap-3 aspect-square cursor-pointer shadow-sm hover:border-[var(--accent-orange)]/30"
-                  >
-                    <div className="w-10 h-10 rounded-lg bg-[var(--accent-light)] flex items-center justify-center text-[var(--accent-orange)]">
-                      <LayoutGrid size={20} />
-                    </div>
-                    <p className="text-[10px] font-bold text-[var(--accent-orange)] truncate w-full text-center">
-                      Node_{i}
-                    </p>
-                  </motion.div>
-                ))}
-              </motion.div>
-            </section>
-          </div>
-
-          {/* Sidebar */}
-          <DevicesSidebar />
+              ))}
+            </motion.div>
+          </section>
         </div>
+
+        {/* Sidebar */}
+        <DevicesSidebar />
       </div>
     </div>
+
+      {/* QR Code Modal */ }
+  <AnimatePresence>
+    {showQrModal && (
+      <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={() => setShowQrModal(false)}
+          className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        />
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.9, y: 20 }}
+          className="relative w-full max-w-sm bg-[var(--bg-card)] rounded-[40px] p-8 border border-[var(--border-color)] shadow-2xl flex flex-col items-center"
+        >
+          <button
+            onClick={() => setShowQrModal(false)}
+            className="absolute top-6 right-6 w-10 h-10 rounded-full bg-[var(--bg-page)] border border-[var(--border-color)] flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--text-main)] transition-colors"
+          >
+            <X size={20} />
+          </button>
+
+          <div className="w-16 h-16 rounded-2xl bg-[var(--accent-orange)]/10 flex items-center justify-center text-[var(--accent-orange)] mb-6">
+            <QrCode size={32} />
+          </div>
+
+          <h3 className="text-xl font-bold text-center mb-2">Device Registration</h3>
+          <p className="text-xs text-[var(--text-muted)] text-center mb-8 px-4">
+            Scan this code with the CashWater Mobile App to bind a new device securely.
+          </p>
+
+          <div className="bg-white p-6 rounded-[32px] shadow-inner mb-8 border-4 border-[var(--accent-orange)]/10">
+            <QRCodeCanvas
+              value={qrToken}
+              size={200}
+              level="H"
+              includeMargin={false}
+              imageSettings={{
+                src: "/logo.png", // Ensure you have a logo or remove this
+                x: undefined,
+                y: undefined,
+                height: 40,
+                width: 40,
+                excavate: true,
+              }}
+            />
+          </div>
+
+          <div className="w-full bg-[var(--bg-page)] rounded-2xl p-4 border border-[var(--border-color)] flex items-center justify-between gap-4">
+            <div className="flex flex-col">
+              <p className="text-[10px] text-[var(--text-muted)] font-bold uppercase tracking-wider">Manual Code</p>
+              <p className="text-sm font-mono font-bold text-[var(--accent-orange)]">{qrToken}</p>
+            </div>
+            <button
+              onClick={copyToClipboard}
+              className="w-10 h-10 rounded-xl bg-[var(--bg-card)] border border-[var(--border-color)] flex items-center justify-center text-[var(--text-muted)] hover:border-[var(--accent-orange)] hover:text-[var(--accent-orange)] transition-all"
+            >
+              {copied ? <Check size={18} /> : <Copy size={18} />}
+            </button>
+          </div>
+
+          <p className="mt-8 text-[10px] text-[var(--text-muted)] font-medium text-center italic">
+            * This code is unique and verified by WASAC Secure Auth.
+          </p>
+        </motion.div>
+      </div>
+    )}
+  </AnimatePresence>
+    </div >
   );
 }

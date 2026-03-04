@@ -59,7 +59,7 @@ export default function LeakAlertBanner() {
             useSSL: false,
             timeout: 10,
             onSuccess: () => client.subscribe(TOPIC_LEAK_REPORT),
-            onFailure: () => {},
+            onFailure: () => { },
           });
         } catch {
           /* ignore */
@@ -74,7 +74,7 @@ export default function LeakAlertBanner() {
         onSuccess: () => {
           client.subscribe(TOPIC_LEAK_REPORT);
         },
-        onFailure: () => {},
+        onFailure: () => { },
       });
     } catch {
       /* ignore */
@@ -99,24 +99,22 @@ export default function LeakAlertBanner() {
             animate={{ opacity: 1, x: 0, scale: 1 }}
             exit={{ opacity: 0, x: 100, scale: 0.9 }}
             transition={{ type: "spring", stiffness: 300, damping: 25 }}
-            className={`pointer-events-auto bg-[var(--bg-card)] border-l-4 rounded-2xl p-5 shadow-2xl border border-[var(--border-color)] ${
-              report.severity === "HIGH"
-                ? "border-l-red-500"
+            className={`pointer-events-auto bg-[var(--bg-card)] border-l-4 rounded-2xl p-5 shadow-2xl border border-[var(--border-color)] ${report.severity === "HIGH"
+                ? "border-l-[var(--accent-orange)]"
                 : report.severity === "MEDIUM"
-                  ? "border-l-orange-500"
-                  : "border-l-yellow-500"
-            }`}
+                  ? "border-l-[var(--accent-teal)]"
+                  : "border-l-[var(--text-muted)]"
+              }`}
           >
             <div className="flex items-start justify-between mb-3">
               <div className="flex items-center gap-2">
                 <div
-                  className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                    report.severity === "HIGH"
-                      ? "bg-red-500/10 text-red-500"
+                  className={`w-8 h-8 rounded-lg flex items-center justify-center ${report.severity === "HIGH"
+                      ? "bg-[var(--accent-orange)]/10 text-[var(--accent-orange)]"
                       : report.severity === "MEDIUM"
-                        ? "bg-orange-500/10 text-orange-500"
-                        : "bg-yellow-500/10 text-yellow-500"
-                  }`}
+                        ? "bg-[var(--accent-teal)]/10 text-[var(--accent-teal)]"
+                        : "bg-[var(--text-muted)]/10 text-[var(--text-muted)]"
+                    }`}
                 >
                   <AlertTriangle size={16} />
                 </div>
@@ -163,7 +161,7 @@ export default function LeakAlertBanner() {
                     className={
                       report.waterSupplyBlocked
                         ? "text-[var(--accent-teal)]"
-                        : "text-[var(--accent-pink)]"
+                        : "text-[var(--accent-orange)]"
                     }
                   >
                     {report.waterSupplyBlocked ? "Blocked" : "Still Active"}

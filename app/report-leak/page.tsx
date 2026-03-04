@@ -161,14 +161,14 @@ export default function LeakReportsPage() {
       }
     };
 
-    client.onConnectionLost = () => {};
+    client.onConnectionLost = () => { };
 
     try {
       client.connect({
         useSSL: false,
         timeout: 10,
         onSuccess: () => client.subscribe(TOPIC_LEAK_REPORT),
-        onFailure: () => {},
+        onFailure: () => { },
       });
     } catch {
       /* ignore */
@@ -277,10 +277,10 @@ export default function LeakReportsPage() {
               Leak Reports
             </h1>
             {newCount > 0 && (
-              <span className="relative flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full bg-[var(--accent-pink)]/10 text-[var(--accent-pink)]">
+              <span className="relative flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full bg-[var(--accent-orange)]/10 text-[var(--accent-orange)]">
                 <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--accent-pink)] opacity-75" />
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-[var(--accent-pink)]" />
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--accent-orange)] opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-[var(--accent-orange)]" />
                 </span>
                 {newCount} new
               </span>
@@ -309,7 +309,7 @@ export default function LeakReportsPage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.05 + i * 0.06 }}
-                className="bg-[#62a9e3] rounded-2xl p-6 text-white relative overflow-hidden shadow-lg"
+                className="bg-[var(--accent-orange)] rounded-2xl p-6 text-white relative overflow-hidden shadow-lg"
               >
                 <div className="absolute top-3 right-3 opacity-20">
                   <Icon size={40} />
@@ -358,11 +358,10 @@ export default function LeakReportsPage() {
                 <button
                   key={f}
                   onClick={() => setFilter(f)}
-                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border ${
-                    filter === f
+                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border ${filter === f
                       ? "bg-[var(--accent-orange)] text-white border-[var(--accent-orange)] shadow-md"
                       : "bg-[var(--bg-card)] text-[var(--text-muted)] border-[var(--border-color)] hover:border-[var(--accent-orange)]/50"
-                  }`}
+                    }`}
                 >
                   {f === "ALL"
                     ? "All"
@@ -440,14 +439,14 @@ export default function LeakReportsPage() {
                         string,
                         { text: string; bg: string }
                       > = {
-                        HIGH: { text: "text-red-500", bg: "bg-red-500/10" },
+                        HIGH: { text: "text-[var(--accent-orange)]", bg: "bg-[var(--accent-orange)]/20" },
                         MEDIUM: {
-                          text: "text-orange-500",
-                          bg: "bg-orange-500/10",
+                          text: "text-[var(--accent-teal)]",
+                          bg: "bg-[var(--accent-teal)]/20",
                         },
                         LOW: {
-                          text: "text-yellow-500",
-                          bg: "bg-yellow-500/10",
+                          text: "text-[var(--text-muted)]",
+                          bg: "bg-[var(--text-muted)]/10",
                         },
                       };
                       const sc = sevColors[report.severity];
@@ -530,10 +529,10 @@ export default function LeakReportsPage() {
                           {/* Status */}
                           <td className="px-4 py-4">
                             {report.status === "NEW" && (
-                              <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase px-2.5 py-1 rounded-full bg-[var(--accent-pink)]/10 text-[var(--accent-pink)]">
+                              <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase px-2.5 py-1 rounded-full bg-[var(--accent-orange)]/10 text-[var(--accent-orange)]">
                                 <span className="relative flex h-1.5 w-1.5">
-                                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--accent-pink)] opacity-75" />
-                                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[var(--accent-pink)]" />
+                                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--accent-orange)] opacity-75" />
+                                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[var(--accent-orange)]" />
                                 </span>
                                 Pending
                               </span>
@@ -556,7 +555,7 @@ export default function LeakReportsPage() {
                               <div className="flex items-center justify-center gap-2">
                                 <button
                                   onClick={() => blockWater(report.id)}
-                                  className="px-3.5 py-1.5 rounded-lg bg-[var(--accent-pink)] text-white text-[11px] font-bold hover:opacity-90 transition-all flex items-center gap-1.5 whitespace-nowrap shadow-sm"
+                                  className="px-3.5 py-1.5 rounded-lg bg-[var(--accent-orange)] text-white text-[11px] font-bold hover:opacity-90 transition-all flex items-center gap-1.5 whitespace-nowrap shadow-sm"
                                 >
                                   <ShieldOff size={13} />
                                   Block Water

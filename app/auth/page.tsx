@@ -12,6 +12,54 @@ function AuthContent() {
     const initialMode =
         searchParams.get("mode") === "register" ? "register" : "login";
     const [mode, setMode] = useState<"login" | "register">(initialMode);
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState("");
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsLoading(true);
+        setError("");
+
+        const endpoint = mode === "login" ? "http://localhost:3005/auth/login" : "http://localhost:3005/auth/register";
+        const body = mode === "login" ? { email, password } : { email, password, role: "ADMIN" };
+
+        try {
+            const response = await fetch(endpoint, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(body),
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                if (mode === "login") {
+                    localStorage.setItem("admin_token", data.access_token);
+
+                    // Decode JWT to get role (simple base64 decode)
+                    try {
+                        const payload = JSON.parse(atob(data.access_token.split('.')[1]));
+                        localStorage.setItem("admin_role", payload.role);
+                    } catch (e) {
+                        console.error("Failed to decode token");
+                    }
+
+                    window.location.href = "/devices";
+                } else {
+                    alert("Registration successful! Please login.");
+                    setMode("login");
+                }
+            } else {
+                setError(data.message || "Authentication failed");
+            }
+        } catch (err) {
+            setError("Server connection failed. Is the backend running on port 3005?");
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     return (
         <div className="h-screen bg-white flex items-stretch font-sans overflow-hidden">
@@ -80,20 +128,14 @@ function AuthContent() {
                                 </span>
                             </div>
 
+                            {error && (
+                                <div className="p-3 rounded-xl bg-red-50 border border-red-100 text-red-500 text-[10px] font-bold">
+                                    {error}
+                                </div>
+                            )}
+
                             {/* Form */}
-                            <form className="space-y-3" onSubmit={(e) => e.preventDefault()}>
-                                {mode === "register" && (
-                                    <div className="space-y-1">
-                                        <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 px-1">
-                                            Name*
-                                        </label>
-                                        <input
-                                            type="text"
-                                            placeholder="Enter your name"
-                                            className="w-full h-10 px-6 rounded-xl bg-[#f8f8f8] border-2 border-transparent focus:border-[#62a9e3] focus:bg-white transition-all duration-300 outline-none font-semibold text-sm"
-                                        />
-                                    </div>
-                                )}
+                            <form className="space-y-3" onSubmit={handleSubmit}>
                                 <div className="space-y-1">
                                     <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 px-1">
                                         Email*
@@ -101,6 +143,8 @@ function AuthContent() {
                                     <input
                                         type="email"
                                         placeholder="Enter your email"
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
                                         className="w-full h-10 px-6 rounded-xl bg-[#f8f8f8] border-2 border-transparent focus:border-[#62a9e3] focus:bg-white transition-all duration-300 outline-none font-semibold text-sm"
                                     />
                                 </div>
@@ -111,6 +155,8 @@ function AuthContent() {
                                     <input
                                         type="password"
                                         placeholder="Enter your password"
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
                                         className="w-full h-10 px-6 rounded-xl bg-[#f8f8f8] border-2 border-transparent focus:border-[#62a9e3] focus:bg-white transition-all duration-300 outline-none font-semibold text-sm"
                                     />
                                 </div>
@@ -136,8 +182,12 @@ function AuthContent() {
                                     </span>
                                 </div>
 
-                                <button className="w-full h-10 rounded-xl bg-[#1a1a1a] hover:bg-[#62a9e3] text-white font-black uppercase tracking-widest text-xs transition-all duration-300 shadow-xl shadow-gray-200 active:scale-[0.98]">
-                                    {mode === "login" ? "Login" : "Sign Up"}
+                                <button
+                                    type="submit"
+                                    disabled={isLoading}
+                                    className="w-full h-10 rounded-xl bg-[#1a1a1a] hover:bg-[#62a9e3] text-white font-black uppercase tracking-widest text-xs transition-all duration-300 shadow-xl shadow-gray-200 active:scale-[0.98] disabled:opacity-50"
+                                >
+                                    {isLoading ? "Processing..." : (mode === "login" ? "Login" : "Sign Up")}
                                 </button>
                             </form>
 
