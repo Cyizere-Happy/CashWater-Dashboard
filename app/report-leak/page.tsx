@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   AlertTriangle,
@@ -17,91 +17,46 @@ import {
   CheckCircle2,
   XCircle,
   Bell,
+  RefreshCw,
+  X,
+  ChevronRight,
+  Loader2,
 } from "lucide-react";
-import Paho from "paho-mqtt";
 import Navbar from "../components/Navbar";
 
-/* ─── MQTT Config ─── */
-const MQTT_HOST = "157.173.101.159";
-const MQTT_WS_PORT = 9001;
-const TOPIC_LEAK_REPORT = "alerts/leak_report";
-const TOPIC_WATER_CONTROL = "control/water_block";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3005";
 
 /* ─── Types ─── */
-interface LeakReport {
+interface DeviceOwner {
   id: string;
-  timestamp: string;
-  reporter: { name: string; phone: string };
-  location: string;
-  severity: "LOW" | "MEDIUM" | "HIGH";
-  waterSupplyBlocked: boolean;
-  description: string;
-  status: "NEW" | "BLOCKED" | "DISMISSED";
+  email: string;
+  role: string;
 }
 
-/* ─── Demo seed data ─── */
-const SEED_REPORTS: LeakReport[] = [
-  {
-    id: "LK-0439",
-    timestamp: new Date(Date.now() - 12 * 60000).toISOString(),
-    reporter: { name: "Jean Pierre Habimana", phone: "+250 788 321 456" },
-    location: "KN 5 Rd, Kigali — Simba junction",
-    severity: "HIGH",
-    waterSupplyBlocked: false,
-    description: "Large burst on main pipe, water flooding the road.",
-    status: "NEW",
-  },
-  {
-    id: "LK-0438",
-    timestamp: new Date(Date.now() - 34 * 60000).toISOString(),
-    reporter: { name: "Marie Claire Uwase", phone: "+250 722 654 789" },
-    location: "KG 11 Ave, Remera",
-    severity: "MEDIUM",
-    waterSupplyBlocked: true,
-    description: "Steady leak from cracked pipe in compound.",
-    status: "NEW",
-  },
-  {
-    id: "LK-0437",
-    timestamp: new Date(Date.now() - 87 * 60000).toISOString(),
-    reporter: { name: "Eric Mugisha", phone: "+250 730 111 222" },
-    location: "Nyamirambo, Sector 3",
-    severity: "LOW",
-    waterSupplyBlocked: false,
-    description: "Small drip from meter connection.",
-    status: "NEW",
-  },
-  {
-    id: "LK-0435",
-    timestamp: new Date(Date.now() - 150 * 60000).toISOString(),
-    reporter: { name: "Alice Mukamana", phone: "+250 788 999 111" },
-    location: "Kicukiro, KK 15 Rd",
-    severity: "HIGH",
-    waterSupplyBlocked: true,
-    description: "Underground pipe burst near school.",
-    status: "BLOCKED",
-  },
-  {
-    id: "LK-0432",
-    timestamp: new Date(Date.now() - 240 * 60000).toISOString(),
-    reporter: { name: "Patrick Niyonzima", phone: "+250 722 333 444" },
-    location: "Gasabo, Kimihurura",
-    severity: "LOW",
-    waterSupplyBlocked: false,
-    description: "Minor seepage at valve joint.",
-    status: "DISMISSED",
-  },
-  {
-    id: "LK-0430",
-    timestamp: new Date(Date.now() - 360 * 60000).toISOString(),
-    reporter: { name: "Grace Ingabire", phone: "+250 738 555 666" },
-    location: "Muhanga, Main Street",
-    severity: "MEDIUM",
-    waterSupplyBlocked: false,
-    description: "Leak at public standpipe.",
-    status: "BLOCKED",
-  },
-];
+interface ReportDevice {
+  id: string;
+  name: string;
+  location: string;
+  latitude?: number;
+  longitude?: number;
+  type: string;
+  status: string;
+  owner?: DeviceOwner;
+}
+
+interface LeakReport {
+  id: string;
+  deviceId: string;
+  device?: ReportDevice;
+  severity: "LOW" | "MEDIUM" | "HIGH";
+  status: "NEW" | "BLOCKED" | "DISMISSED";
+  description: string;
+  location?: string;
+  latitude?: number;
+  longitude?: number;
+  createdAt: string;
+  resolvedAt?: string;
+}
 
 /* ─── Helpers ─── */
 function formatDate(ts: string) {
@@ -120,104 +75,272 @@ function formatTime(ts: string) {
   });
 }
 
+function timeAgo(ts: string) {
+  const diff = Math.floor((Date.now() - new Date(ts).getTime()) / 60000);
+  if (diff < 1) return "Just now";
+  if (diff < 60) return `${diff}m ago`;
+  const h = Math.floor(diff / 60);
+  if (h < 24) return `${h}h ago`;
+  return `${Math.floor(h / 24)}d ago`;
+}
+
+/* ─── Detail Modal ─── */
+function ReportDetailModal({
+  report,
+  onClose,
+  onBlock,
+  onDismiss,
+}: {
+  report: LeakReport;
+  onClose: () => void;
+  onBlock: (id: string) => void;
+  onDismiss: (id: string) => void;
+}) {
+  const sevColors: Record<string, { text: string; bg: string; border: string }> = {
+    HIGH: { text: "text-red-600", bg: "bg-red-50", border: "border-red-200" },
+    MEDIUM: { text: "text-amber-600", bg: "bg-amber-50", border: "border-amber-200" },
+    LOW: { text: "text-blue-600", bg: "bg-blue-50", border: "border-blue-200" },
+  };
+  const sc = sevColors[report.severity] ?? sevColors.LOW;
+
+  const hasCoords = report.latitude && report.longitude;
+  const mapsUrl = hasCoords
+    ? `https://www.google.com/maps?q=${report.latitude},${report.longitude}`
+    : null;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95, y: 20 }}
+        className="w-full max-w-lg bg-[var(--bg-card)] rounded-3xl shadow-2xl border border-[var(--border-color)] overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className={`p-6 ${sc.bg} ${sc.border} border-b`}>
+          <div className="flex items-start justify-between">
+            <div>
+              <div className={`inline-flex items-center gap-1.5 text-xs font-bold uppercase px-2.5 py-1 rounded-full ${sc.bg} ${sc.text} border ${sc.border} mb-2`}>
+                {report.severity === "HIGH" && <ShieldAlert size={12} />}
+                {report.severity === "MEDIUM" && <Waves size={12} />}
+                {report.severity === "LOW" && <Droplets size={12} />}
+                {report.severity} Severity
+              </div>
+              <h2 className="text-lg font-bold text-[var(--text-main)]">
+                Leak Report Details
+              </h2>
+              <p className="text-xs text-[var(--text-muted)] mt-0.5">
+                Report #{report.id.slice(0, 8).toUpperCase()} · {timeAgo(report.createdAt)}
+              </p>
+            </div>
+            <button
+              onClick={onClose}
+              className="p-2 rounded-xl hover:bg-[var(--border-color)] transition-colors"
+            >
+              <X size={18} className="text-[var(--text-muted)]" />
+            </button>
+          </div>
+        </div>
+
+        {/* Body */}
+        <div className="p-6 space-y-4 max-h-[60vh] overflow-y-auto">
+
+          {/* Description */}
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-1">
+              Description
+            </p>
+            <p className="text-sm text-[var(--text-main)] bg-[var(--bg-page)] rounded-xl p-4 leading-relaxed border border-[var(--border-color)]">
+              {report.description || "No description provided."}
+            </p>
+          </div>
+
+          {/* Location */}
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-1">
+              Location
+            </p>
+            <div className="flex items-start gap-3 bg-[var(--bg-page)] rounded-xl p-4 border border-[var(--border-color)]">
+              <MapPin size={16} className="text-[var(--accent-orange)] mt-0.5 shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm text-[var(--text-main)] break-words">
+                  {report.location || report.device?.location || "Unknown location"}
+                </p>
+                {hasCoords && (
+                  <p className="text-[10px] text-[var(--text-muted)] mt-0.5">
+                    {Number(report.latitude).toFixed(6)}, {Number(report.longitude).toFixed(6)}
+                  </p>
+                )}
+              </div>
+              {mapsUrl && (
+                <a
+                  href={mapsUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-1 text-[11px] font-bold text-[var(--accent-orange)] hover:underline whitespace-nowrap"
+                >
+                  Open Map <ChevronRight size={12} />
+                </a>
+              )}
+            </div>
+          </div>
+
+          {/* Device Info */}
+          {report.device && (
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-1">
+                Registered Device
+              </p>
+              <div className="bg-[var(--bg-page)] rounded-xl p-4 border border-[var(--border-color)] space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-xs text-[var(--text-muted)]">Device ID</span>
+                  <span className="text-xs font-mono font-bold text-[var(--text-main)]">{report.device.id}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-xs text-[var(--text-muted)]">Name</span>
+                  <span className="text-xs font-semibold text-[var(--text-main)]">{report.device.name || "—"}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-xs text-[var(--text-muted)]">Type</span>
+                  <span className="text-xs text-[var(--text-main)]">{report.device.type || "—"}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-xs text-[var(--text-muted)]">Status</span>
+                  <span className={`text-xs font-bold ${report.device.status === 'ACTIVE' ? 'text-emerald-600' : 'text-red-500'}`}>
+                    {report.device.status}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Owner Info */}
+          {report.device?.owner && (
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-1">
+                Account Holder
+              </p>
+              <div className="flex items-center gap-3 bg-[var(--bg-page)] rounded-xl p-4 border border-[var(--border-color)]">
+                <div className="w-9 h-9 rounded-full bg-[var(--accent-orange)]/10 flex items-center justify-center">
+                  <User size={16} className="text-[var(--accent-orange)]" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-[var(--text-main)]">
+                    {report.device.owner.email}
+                  </p>
+                  <p className="text-[10px] text-[var(--text-muted)] uppercase tracking-wide">
+                    {report.device.owner.role}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Timestamps */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-[var(--bg-page)] rounded-xl p-3 border border-[var(--border-color)]">
+              <p className="text-[10px] text-[var(--text-muted)] mb-1 flex items-center gap-1">
+                <Clock size={10} /> Reported
+              </p>
+              <p className="text-xs font-semibold text-[var(--text-main)]">{formatDate(report.createdAt)}</p>
+              <p className="text-[10px] text-[var(--text-muted)]">{formatTime(report.createdAt)}</p>
+            </div>
+            {report.resolvedAt && (
+              <div className="bg-[var(--bg-page)] rounded-xl p-3 border border-[var(--border-color)]">
+                <p className="text-[10px] text-[var(--text-muted)] mb-1 flex items-center gap-1">
+                  <CheckCircle2 size={10} /> Resolved
+                </p>
+                <p className="text-xs font-semibold text-[var(--text-main)]">{formatDate(report.resolvedAt)}</p>
+                <p className="text-[10px] text-[var(--text-muted)]">{formatTime(report.resolvedAt)}</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Actions */}
+        {report.status === "NEW" && (
+          <div className="p-4 border-t border-[var(--border-color)] flex gap-3">
+            <button
+              onClick={() => { onBlock(report.id); onClose(); }}
+              className="flex-1 px-4 py-2.5 rounded-xl bg-[var(--accent-orange)] text-white text-xs font-bold hover:opacity-90 transition-all flex items-center justify-center gap-2"
+            >
+              <ShieldOff size={14} /> Block Water Supply
+            </button>
+            <button
+              onClick={() => { onDismiss(report.id); onClose(); }}
+              className="flex-1 px-4 py-2.5 rounded-xl bg-[var(--bg-page)] text-[var(--text-muted)] text-xs font-bold border border-[var(--border-color)] hover:border-[var(--accent-orange)]/50 transition-all flex items-center justify-center gap-2"
+            >
+              <ShieldCheck size={14} /> Dismiss
+            </button>
+          </div>
+        )}
+      </motion.div>
+    </motion.div>
+  );
+}
+
+/* ─── Main Page ─── */
 export default function LeakReportsPage() {
   const [mounted, setMounted] = useState(false);
-  const [reports, setReports] = useState<LeakReport[]>(SEED_REPORTS);
-  const [filter, setFilter] = useState<"ALL" | "NEW" | "BLOCKED" | "DISMISSED">(
-    "ALL",
-  );
+  const [reports, setReports] = useState<LeakReport[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [filter, setFilter] = useState<"ALL" | "NEW" | "BLOCKED" | "DISMISSED">("ALL");
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const mqttClientRef = useRef<Paho.Client | null>(null);
+  const [selectedReport, setSelectedReport] = useState<LeakReport | null>(null);
 
   useEffect(() => setMounted(true), []);
 
-  /* ─── MQTT listener ─── */
-  useEffect(() => {
-    const clientID = "leak_admin_" + Math.random().toString(16).slice(2, 10);
-    const client = new Paho.Client(MQTT_HOST, MQTT_WS_PORT, clientID);
-    mqttClientRef.current = client;
-
-    client.onMessageArrived = (message) => {
-      if (message.destinationName === TOPIC_LEAK_REPORT) {
-        try {
-          const data = JSON.parse(message.payloadString);
-          const newReport: LeakReport = {
-            id: "LK-" + String(Date.now()).slice(-4),
-            timestamp: data.timestamp || new Date().toISOString(),
-            reporter: data.reporter || { name: "Unknown", phone: "—" },
-            location: data.location || "Unknown location",
-            severity: (
-              data.severity || "MEDIUM"
-            ).toUpperCase() as LeakReport["severity"],
-            waterSupplyBlocked: data.waterSupplyBlocked ?? false,
-            description: data.description || "",
-            status: "NEW",
-          };
-          setReports((prev) => [newReport, ...prev]);
-        } catch (e) {
-          console.error("Failed to parse leak report", e);
-        }
-      }
-    };
-
-    client.onConnectionLost = () => { };
-
+  const fetchReports = useCallback(async (isRefresh = false) => {
+    if (isRefresh) setRefreshing(true);
+    else setLoading(true);
     try {
-      client.connect({
-        useSSL: false,
-        timeout: 10,
-        onSuccess: () => client.subscribe(TOPIC_LEAK_REPORT),
-        onFailure: () => { },
+      const res = await fetch(`${API_BASE}/reports`);
+      if (res.ok) {
+        const data: LeakReport[] = await res.json();
+        setReports(data);
+      }
+    } catch (e) {
+      console.error("Failed to fetch reports:", e);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchReports();
+    // Poll every 30 seconds for new reports
+    const interval = setInterval(() => fetchReports(true), 30000);
+    return () => clearInterval(interval);
+  }, [fetchReports]);
+
+  const updateReportStatus = useCallback(async (id: string, status: "BLOCKED" | "DISMISSED") => {
+    try {
+      const res = await fetch(`${API_BASE}/reports/${id}/status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
       });
-    } catch {
-      /* ignore */
-    }
-
-    return () => {
-      if (client.isConnected()) client.disconnect();
-    };
-  }, []);
-
-  /* ─── Actions ─── */
-  const blockWater = useCallback((id: string) => {
-    setReports((prev) =>
-      prev.map((r) => (r.id === id ? { ...r, status: "BLOCKED" as const } : r)),
-    );
-    if (mqttClientRef.current?.isConnected()) {
-      const msg = new Paho.Message(
-        JSON.stringify({
-          action: "BLOCK",
-          reportId: id,
-          timestamp: new Date().toISOString(),
-        }),
-      );
-      msg.destinationName = TOPIC_WATER_CONTROL;
-      mqttClientRef.current.send(msg);
+      if (res.ok) {
+        setReports((prev) =>
+          prev.map((r) => (r.id === id ? { ...r, status, resolvedAt: new Date().toISOString() } : r))
+        );
+      }
+    } catch (e) {
+      console.error("Failed to update report status:", e);
     }
   }, []);
 
-  const dismiss = useCallback((id: string) => {
-    setReports((prev) =>
-      prev.map((r) =>
-        r.id === id ? { ...r, status: "DISMISSED" as const } : r,
-      ),
-    );
-  }, []);
-
-  const toggleSelect = (id: string) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  };
-
-  const toggleSelectAll = () => {
-    if (selectedIds.size === filtered.length) setSelectedIds(new Set());
-    else setSelectedIds(new Set(filtered.map((r) => r.id)));
-  };
+  const blockWater = useCallback((id: string) => updateReportStatus(id, "BLOCKED"), [updateReportStatus]);
+  const dismiss = useCallback((id: string) => updateReportStatus(id, "DISMISSED"), [updateReportStatus]);
 
   /* ─── Computed ─── */
   const totalReports = reports.length;
@@ -230,35 +353,19 @@ export default function LeakReportsPage() {
     .filter(
       (r) =>
         searchQuery === "" ||
-        r.reporter.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        r.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        r.id.toLowerCase().includes(searchQuery.toLowerCase()),
+        r.deviceId.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (r.location || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (r.device?.owner?.email || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+        r.id.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
   if (!mounted) return null;
 
-  /* ─── Stat Cards Config ─── */
   const stats = [
-    {
-      label: "Total Reports",
-      value: totalReports,
-      icon: Droplets,
-    },
-    {
-      label: "New / Pending",
-      value: newCount,
-      icon: AlertTriangle,
-    },
-    {
-      label: "Water Blocked",
-      value: blockedCount,
-      icon: ShieldOff,
-    },
-    {
-      label: "Dismissed",
-      value: dismissedCount,
-      icon: CheckCircle2,
-    },
+    { label: "Total Reports", value: totalReports, icon: Droplets },
+    { label: "New / Pending", value: newCount, icon: AlertTriangle },
+    { label: "Water Blocked", value: blockedCount, icon: ShieldOff },
+    { label: "Dismissed", value: dismissedCount, icon: CheckCircle2 },
   ];
 
   return (
@@ -286,11 +393,19 @@ export default function LeakReportsPage() {
               </span>
             )}
           </div>
-          <div className="flex items-center gap-2">
-            <Bell size={18} className="text-[var(--text-muted)]" />
-            <span className="text-xs text-[var(--text-muted)]">
-              Live MQTT listener active
-            </span>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 text-xs text-[var(--text-muted)]">
+              <Bell size={14} />
+              Auto-refresh every 30s
+            </div>
+            <button
+              onClick={() => fetchReports(true)}
+              disabled={refreshing}
+              className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[var(--bg-card)] border border-[var(--border-color)] text-xs font-bold text-[var(--text-main)] hover:border-[var(--accent-orange)]/50 transition-all"
+            >
+              <RefreshCw size={13} className={refreshing ? "animate-spin" : ""} />
+              Refresh
+            </button>
           </div>
         </motion.div>
 
@@ -328,7 +443,6 @@ export default function LeakReportsPage() {
           transition={{ delay: 0.15 }}
           className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-6"
         >
-          {/* Search */}
           <div className="relative flex-1 max-w-sm w-full">
             <Search
               size={16}
@@ -338,22 +452,14 @@ export default function LeakReportsPage() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search by name, location, ID…"
+              placeholder="Search by device ID, location, email…"
               className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[var(--bg-card)] border border-[var(--border-color)] text-sm text-[var(--text-main)] placeholder:text-[var(--text-muted)]/50 focus:outline-none focus:border-[var(--accent-orange)] transition-colors"
             />
           </div>
-
-          {/* Filter Buttons */}
           <div className="flex gap-2 flex-wrap">
             {(["ALL", "NEW", "BLOCKED", "DISMISSED"] as const).map((f) => {
               const count =
-                f === "ALL"
-                  ? totalReports
-                  : f === "NEW"
-                    ? newCount
-                    : f === "BLOCKED"
-                      ? blockedCount
-                      : dismissedCount;
+                f === "ALL" ? totalReports : f === "NEW" ? newCount : f === "BLOCKED" ? blockedCount : dismissedCount;
               return (
                 <button
                   key={f}
@@ -363,14 +469,7 @@ export default function LeakReportsPage() {
                       : "bg-[var(--bg-card)] text-[var(--text-muted)] border-[var(--border-color)] hover:border-[var(--accent-orange)]/50"
                     }`}
                 >
-                  {f === "ALL"
-                    ? "All"
-                    : f === "NEW"
-                      ? "Pending"
-                      : f === "BLOCKED"
-                        ? "Blocked"
-                        : "Dismissed"}{" "}
-                  · {count}
+                  {f === "ALL" ? "All" : f === "NEW" ? "Pending" : f === "BLOCKED" ? "Blocked" : "Dismissed"} · {count}
                 </button>
               );
             })}
@@ -384,204 +483,164 @@ export default function LeakReportsPage() {
           transition={{ delay: 0.2 }}
           className="bg-[var(--bg-card)] rounded-3xl shadow-[var(--card-shadow)] border border-[var(--border-color)] overflow-hidden"
         >
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-[var(--border-color)]">
-                  <th className="text-left px-6 py-4 w-10">
-                    <input
-                      type="checkbox"
-                      checked={
-                        filtered.length > 0 &&
-                        selectedIds.size === filtered.length
-                      }
-                      onChange={toggleSelectAll}
-                      className="w-4 h-4 rounded accent-[var(--accent-orange)] cursor-pointer"
-                    />
-                  </th>
-                  <th className="text-left px-4 py-4 text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
-                    Report ID
-                  </th>
-                  <th className="text-left px-4 py-4 text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
-                    Reporter
-                  </th>
-                  <th className="text-left px-4 py-4 text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
-                    Location
-                  </th>
-                  <th className="text-left px-4 py-4 text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
-                    Severity
-                  </th>
-                  <th className="text-left px-4 py-4 text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
-                    Date
-                  </th>
-                  <th className="text-left px-4 py-4 text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
-                    Status
-                  </th>
-                  <th className="text-center px-4 py-4 text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                <AnimatePresence>
-                  {filtered.length === 0 ? (
-                    <tr>
-                      <td
-                        colSpan={8}
-                        className="text-center py-16 text-[var(--text-muted)] text-sm"
-                      >
-                        No leak reports found.
-                      </td>
-                    </tr>
-                  ) : (
-                    filtered.map((report) => {
-                      const sevColors: Record<
-                        string,
-                        { text: string; bg: string }
-                      > = {
-                        HIGH: { text: "text-[var(--accent-orange)]", bg: "bg-[var(--accent-orange)]/20" },
-                        MEDIUM: {
-                          text: "text-[var(--accent-teal)]",
-                          bg: "bg-[var(--accent-teal)]/20",
-                        },
-                        LOW: {
-                          text: "text-[var(--text-muted)]",
-                          bg: "bg-[var(--text-muted)]/10",
-                        },
-                      };
-                      const sc = sevColors[report.severity];
-                      return (
-                        <motion.tr
-                          key={report.id}
-                          layout
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          exit={{ opacity: 0, x: -40 }}
-                          className={`border-b border-[var(--border-color)] last:border-b-0 transition-colors hover:bg-[var(--bg-page)]/50 ${report.status === "DISMISSED" ? "opacity-50" : ""}`}
-                        >
-                          {/* Checkbox */}
-                          <td className="px-6 py-4">
-                            <input
-                              type="checkbox"
-                              checked={selectedIds.has(report.id)}
-                              onChange={() => toggleSelect(report.id)}
-                              className="w-4 h-4 rounded accent-[var(--accent-orange)] cursor-pointer"
-                            />
-                          </td>
-
-                          {/* Report ID */}
-                          <td className="px-4 py-4">
-                            <span className="font-mono font-bold text-[var(--text-main)]">
-                              {report.id}
-                            </span>
-                          </td>
-
-                          {/* Reporter */}
-                          <td className="px-4 py-4">
-                            <div>
-                              <p className="font-semibold text-[var(--text-main)] whitespace-nowrap">
-                                {report.reporter.name}
+          {loading ? (
+            <div className="flex flex-col items-center justify-center py-20 gap-3">
+              <Loader2 size={32} className="animate-spin text-[var(--accent-orange)]" />
+              <p className="text-sm text-[var(--text-muted)]">Loading reports…</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-[var(--border-color)]">
+                    <th className="text-left px-6 py-4 text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
+                      Device / Reporter
+                    </th>
+                    <th className="text-left px-4 py-4 text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
+                      Location
+                    </th>
+                    <th className="text-left px-4 py-4 text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
+                      Severity
+                    </th>
+                    <th className="text-left px-4 py-4 text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
+                      When
+                    </th>
+                    <th className="text-left px-4 py-4 text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
+                      Status
+                    </th>
+                    <th className="text-center px-4 py-4 text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <AnimatePresence>
+                    {filtered.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="text-center py-16 text-[var(--text-muted)] text-sm">
+                          No leak reports found.
+                        </td>
+                      </tr>
+                    ) : (
+                      filtered.map((report) => {
+                        const sevColors: Record<string, { text: string; bg: string }> = {
+                          HIGH: { text: "text-red-600", bg: "bg-red-100" },
+                          MEDIUM: { text: "text-amber-600", bg: "bg-amber-100" },
+                          LOW: { text: "text-blue-600", bg: "bg-blue-100" },
+                        };
+                        const sc = sevColors[report.severity] ?? sevColors.LOW;
+                        return (
+                          <motion.tr
+                            key={report.id}
+                            layout
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0, x: -40 }}
+                            className={`border-b border-[var(--border-color)] last:border-b-0 transition-colors hover:bg-[var(--bg-page)]/50 cursor-pointer ${report.status === "DISMISSED" ? "opacity-50" : ""
+                              }`}
+                            onClick={() => setSelectedReport(report)}
+                          >
+                            {/* Device / Reporter */}
+                            <td className="px-6 py-4">
+                              <p className="font-bold text-[var(--text-main)] font-mono text-xs">
+                                {report.deviceId}
                               </p>
-                              <p className="text-[10px] text-[var(--text-muted)] flex items-center gap-1 mt-0.5">
-                                <Phone size={10} /> {report.reporter.phone}
-                              </p>
-                            </div>
-                          </td>
-
-                          {/* Location */}
-                          <td className="px-4 py-4">
-                            <p
-                              className="text-[var(--text-main)] max-w-[200px] truncate"
-                              title={report.location}
-                            >
-                              {report.location}
-                            </p>
-                          </td>
-
-                          {/* Severity */}
-                          <td className="px-4 py-4">
-                            <span
-                              className={`inline-flex items-center gap-1.5 text-xs font-bold uppercase px-2.5 py-1 rounded-full ${sc.bg} ${sc.text}`}
-                            >
-                              {report.severity === "HIGH" && (
-                                <ShieldAlert size={12} />
+                              {report.device?.owner?.email && (
+                                <p className="text-[10px] text-[var(--text-muted)] mt-0.5">
+                                  {report.device.owner.email}
+                                </p>
                               )}
-                              {report.severity === "MEDIUM" && (
-                                <Waves size={12} />
+                              {report.device?.name && (
+                                <p className="text-[10px] text-[var(--text-muted)]">
+                                  {report.device.name}
+                                </p>
                               )}
-                              {report.severity === "LOW" && (
-                                <Droplets size={12} />
-                              )}
-                              {report.severity}
-                            </span>
-                          </td>
+                            </td>
 
-                          {/* Date */}
-                          <td className="px-4 py-4 whitespace-nowrap">
-                            <p className="text-[var(--text-main)]">
-                              {formatDate(report.timestamp)}
-                            </p>
-                            <p className="text-[10px] text-[var(--text-muted)]">
-                              {formatTime(report.timestamp)}
-                            </p>
-                          </td>
-
-                          {/* Status */}
-                          <td className="px-4 py-4">
-                            {report.status === "NEW" && (
-                              <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase px-2.5 py-1 rounded-full bg-[var(--accent-orange)]/10 text-[var(--accent-orange)]">
-                                <span className="relative flex h-1.5 w-1.5">
-                                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--accent-orange)] opacity-75" />
-                                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[var(--accent-orange)]" />
-                                </span>
-                                Pending
-                              </span>
-                            )}
-                            {report.status === "BLOCKED" && (
-                              <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase px-2.5 py-1 rounded-full bg-[var(--accent-teal)]/10 text-[var(--accent-teal)]">
-                                <CheckCircle2 size={12} /> Blocked
-                              </span>
-                            )}
-                            {report.status === "DISMISSED" && (
-                              <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase px-2.5 py-1 rounded-full bg-[var(--text-muted)]/10 text-[var(--text-muted)]">
-                                <XCircle size={12} /> Dismissed
-                              </span>
-                            )}
-                          </td>
-
-                          {/* Actions */}
-                          <td className="px-4 py-4">
-                            {report.status === "NEW" ? (
-                              <div className="flex items-center justify-center gap-2">
-                                <button
-                                  onClick={() => blockWater(report.id)}
-                                  className="px-3.5 py-1.5 rounded-lg bg-[var(--accent-orange)] text-white text-[11px] font-bold hover:opacity-90 transition-all flex items-center gap-1.5 whitespace-nowrap shadow-sm"
+                            {/* Location */}
+                            <td className="px-4 py-4">
+                              <div className="flex items-start gap-1.5">
+                                <MapPin size={12} className="text-[var(--accent-orange)] mt-0.5 shrink-0" />
+                                <p
+                                  className="text-[var(--text-main)] text-xs max-w-[180px] truncate"
+                                  title={report.location || report.device?.location}
                                 >
-                                  <ShieldOff size={13} />
-                                  Block Water
-                                </button>
-                                <button
-                                  onClick={() => dismiss(report.id)}
-                                  className="px-3.5 py-1.5 rounded-lg bg-[var(--bg-page)] text-[var(--text-muted)] text-[11px] font-bold border border-[var(--border-color)] hover:border-[var(--accent-orange)]/50 transition-all flex items-center gap-1.5 whitespace-nowrap"
-                                >
-                                  <ShieldCheck size={13} />
-                                  Don&apos;t Block
-                                </button>
+                                  {report.location || report.device?.location || "Unknown"}
+                                </p>
                               </div>
-                            ) : (
-                              <span className="text-[10px] text-[var(--text-muted)] text-center block">
-                                —
+                            </td>
+
+                            {/* Severity */}
+                            <td className="px-4 py-4">
+                              <span
+                                className={`inline-flex items-center gap-1.5 text-xs font-bold uppercase px-2.5 py-1 rounded-full ${sc.bg} ${sc.text}`}
+                              >
+                                {report.severity === "HIGH" && <ShieldAlert size={12} />}
+                                {report.severity === "MEDIUM" && <Waves size={12} />}
+                                {report.severity === "LOW" && <Droplets size={12} />}
+                                {report.severity}
                               </span>
-                            )}
-                          </td>
-                        </motion.tr>
-                      );
-                    })
-                  )}
-                </AnimatePresence>
-              </tbody>
-            </table>
-          </div>
+                            </td>
+
+                            {/* When */}
+                            <td className="px-4 py-4 whitespace-nowrap">
+                              <p className="text-xs text-[var(--text-main)]">{timeAgo(report.createdAt)}</p>
+                              <p className="text-[10px] text-[var(--text-muted)]">{formatDate(report.createdAt)}</p>
+                            </td>
+
+                            {/* Status */}
+                            <td className="px-4 py-4">
+                              {report.status === "NEW" && (
+                                <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase px-2.5 py-1 rounded-full bg-[var(--accent-orange)]/10 text-[var(--accent-orange)]">
+                                  <span className="relative flex h-1.5 w-1.5">
+                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--accent-orange)] opacity-75" />
+                                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[var(--accent-orange)]" />
+                                  </span>
+                                  Pending
+                                </span>
+                              )}
+                              {report.status === "BLOCKED" && (
+                                <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700">
+                                  <CheckCircle2 size={12} /> Blocked
+                                </span>
+                              )}
+                              {report.status === "DISMISSED" && (
+                                <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase px-2.5 py-1 rounded-full bg-gray-100 text-gray-500">
+                                  <XCircle size={12} /> Dismissed
+                                </span>
+                              )}
+                            </td>
+
+                            {/* Actions */}
+                            <td className="px-4 py-4" onClick={(e) => e.stopPropagation()}>
+                              {report.status === "NEW" ? (
+                                <div className="flex items-center justify-center gap-2">
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); blockWater(report.id); }}
+                                    className="px-3 py-1.5 rounded-lg bg-[var(--accent-orange)] text-white text-[11px] font-bold hover:opacity-90 transition-all flex items-center gap-1 whitespace-nowrap"
+                                  >
+                                    <ShieldOff size={11} /> Block
+                                  </button>
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); dismiss(report.id); }}
+                                    className="px-3 py-1.5 rounded-lg bg-[var(--bg-page)] text-[var(--text-muted)] text-[11px] font-bold border border-[var(--border-color)] hover:border-[var(--accent-orange)]/50 transition-all flex items-center gap-1 whitespace-nowrap"
+                                  >
+                                    <ShieldCheck size={11} /> Dismiss
+                                  </button>
+                                </div>
+                              ) : (
+                                <span className="text-[10px] text-[var(--text-muted)] text-center block">—</span>
+                              )}
+                            </td>
+                          </motion.tr>
+                        );
+                      })
+                    )}
+                  </AnimatePresence>
+                </tbody>
+              </table>
+            </div>
+          )}
 
           {/* Footer */}
           <div className="flex items-center justify-between px-6 py-4 border-t border-[var(--border-color)]">
@@ -589,11 +648,23 @@ export default function LeakReportsPage() {
               Showing {filtered.length} of {totalReports} reports
             </p>
             <p className="text-[10px] text-[var(--text-muted)]">
-              WASAC Admin • Live MQTT Feed
+              WASAC Admin · Click any row to view full details
             </p>
           </div>
         </motion.div>
       </div>
+
+      {/* ─── Detail Modal ─── */}
+      <AnimatePresence>
+        {selectedReport && (
+          <ReportDetailModal
+            report={selectedReport}
+            onClose={() => setSelectedReport(null)}
+            onBlock={blockWater}
+            onDismiss={dismiss}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

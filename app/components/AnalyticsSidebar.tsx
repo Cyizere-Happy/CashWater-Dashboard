@@ -1,7 +1,10 @@
-"use client";
-
 import { motion } from "framer-motion";
 import { Home, Receipt, TrendingUp } from "lucide-react";
+
+interface AnalyticsSidebarProps {
+  totalProperties: number | null;
+  unpaidBills: number;
+}
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -16,7 +19,10 @@ const itemVariants = {
   visible: { opacity: 1, x: 0, transition: { duration: 0.5 } },
 };
 
-export default function AnalyticsSidebar() {
+export default function AnalyticsSidebar({
+  totalProperties,
+  unpaidBills,
+}: AnalyticsSidebarProps) {
   return (
     <motion.aside
       variants={containerVariants}
@@ -39,7 +45,9 @@ export default function AnalyticsSidebar() {
               <h4 className="text-sm font-semibold text-[var(--text-main)]">Total Properties</h4>
               <p className="text-[10px] text-[var(--text-muted)]">Verified Registered</p>
             </div>
-            <div className="font-bold text-sm">15,820</div>
+            <div className="font-bold text-sm">
+              {totalProperties !== null ? totalProperties.toLocaleString() : "--"}
+            </div>
           </div>
 
           <motion.div
@@ -57,7 +65,9 @@ export default function AnalyticsSidebar() {
                 Past 30 days
               </p>
             </div>
-            <div className="font-bold text-sm">421</div>
+            <div className="font-bold text-sm">
+              {unpaidBills.toLocaleString()}
+            </div>
           </motion.div>
         </div>
 

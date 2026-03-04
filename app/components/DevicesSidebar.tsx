@@ -67,11 +67,40 @@ function AnimatedCircle({
   );
 }
 
-export default function DevicesSidebar() {
+interface DevicesSidebarProps {
+  devices: any[];
+}
+
+export default function DevicesSidebar({ devices }: DevicesSidebarProps) {
+  const residentialCount = devices.filter(d =>
+    d.type?.toUpperCase() === 'RESIDENTIAL' || d.type === 'Smart Meter'
+  ).length;
+  const commercialCount = devices.filter(d => d.type?.toUpperCase() === 'COMMERCIAL').length;
+  const industrialCount = devices.filter(d => d.type?.toUpperCase() === 'INDUSTRIAL').length;
+  const total = devices.length || 1;
+
   const stats = [
-    { label: 'Uptime', value: 98, sublabel: 'this week', color: 'var(--accent-orange)' },
-    { label: 'Cloud Space', value: 12, sublabel: 'gb left', color: 'var(--accent-orange)' },
-    { label: 'Shared Devices', value: 49, sublabel: 'today', color: 'var(--accent-orange)' },
+    {
+      label: 'Residential',
+      value: residentialCount,
+      percentage: Math.round((residentialCount / total) * 100),
+      sublabel: 'Properties',
+      color: 'var(--accent-orange)'
+    },
+    {
+      label: 'Commercial',
+      value: commercialCount,
+      percentage: Math.round((commercialCount / total) * 100),
+      sublabel: 'Businesses',
+      color: '#34d399' // Success green
+    },
+    {
+      label: 'Industrial',
+      value: industrialCount,
+      percentage: Math.round((industrialCount / total) * 100),
+      sublabel: 'Facilities',
+      color: '#60a5fa' // Info blue
+    },
   ];
 
   return (
@@ -114,13 +143,18 @@ export default function DevicesSidebar() {
                 <h4 className="font-bold text-sm text-[var(--text-main)]">
                   {stat.label}
                 </h4>
-                <p className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider">
-                  {stat.sublabel}
-                </p>
+                <div className="flex items-center gap-2">
+                  <p className="text-[14px] font-bold text-[var(--text-main)]">
+                    {stat.value.toLocaleString()}
+                  </p>
+                  <p className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider">
+                    {stat.sublabel}
+                  </p>
+                </div>
               </div>
 
               <AnimatedCircle
-                value={stat.value}
+                value={stat.percentage}
                 color={stat.color}
                 delay={0.6 + idx * 0.2}
               />

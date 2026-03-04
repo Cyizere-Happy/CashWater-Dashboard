@@ -11,13 +11,60 @@ const TOPIC_LED_STATE = "control/led/status_happy";
 export function useMQTT() {
     const [isConnected, setIsConnected] = useState(false);
     const [revenueTarget, setRevenueTarget] = useState<number | null>(78.5);
-    const [households, setHouseholds] = useState<number | null>(12450);
+    const [households, setHouseholds] = useState<number | null>(0);
+    const [unpaidBills, setUnpaidBills] = useState<number>(0);
     const [revenue, setRevenue] = useState<number | null>(45280);
     const [anomalies, setAnomalies] = useState<string>('0 SECURE');
     const [mqttMessage, setMqttMessage] = useState('Analytics Bridge Active');
     const [lastHeartbeat, setLastHeartbeat] = useState<string | null>(null);
 
     const clientRef = useRef<Paho.Client | null>(null);
+
+    // Fetch real device data from API
+    useEffect(() => {
+        let isMounted = true;
+        let failCount = 0;
+
+        const fetchStats = async () => {
+            const token = typeof window !== 'undefined' ? localStorage.getItem("admin_token") : null;
+            if (!token || !isMounted) return;
+
+            // Stop spamming if backend is down
+            if (failCount > 3 && Math.random() < 0.7) return;
+
+            try {
+                const response = await fetch("http://localhost:3005/devices", {
+                    headers: {
+                        "Authorization": `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    failCount = 0;
+                    const data = await response.json();
+                    if (Array.isArray(data) && isMounted) {
+                        setHouseholds(data.length);
+                        const blocked = data.filter((d: any) => d.isValveBlocked).length;
+                        setUnpaidBills(blocked);
+                    }
+                } else {
+                    failCount++;
+                }
+            } catch (error) {
+                failCount++;
+                if (failCount < 3) {
+                    console.error("MQTT Hook: Backend offline or unreachable at port 3005.");
+                }
+            }
+        };
+
+        fetchStats();
+        const interval = setInterval(fetchStats, 10000); // Update every 10s
+        return () => {
+            isMounted = false;
+            clearInterval(interval);
+        };
+    }, []);
 
     useEffect(() => {
         const clientID = "web_ui_" + Math.random().toString(16).slice(2, 10);
@@ -91,6 +138,7 @@ export function useMQTT() {
         isConnected,
         revenueTarget,
         households,
+        unpaidBills,
         revenue,
         anomalies,
         mqttMessage,

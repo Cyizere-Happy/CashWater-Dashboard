@@ -19,6 +19,7 @@ export default function Home() {
     mqttMessage,
     lastHeartbeat,
     sendLedCommand,
+    unpaidBills,
   } = useMQTT();
 
   return (
@@ -39,7 +40,10 @@ export default function Home() {
           <EventFeed lastHeartbeat={lastHeartbeat} mqttMessage={mqttMessage} />
         </div>
 
-        <AnalyticsSidebar />
+        <AnalyticsSidebar
+          totalProperties={households}
+          unpaidBills={unpaidBills}
+        />
       </main>
 
       <LeakAlertBanner />
