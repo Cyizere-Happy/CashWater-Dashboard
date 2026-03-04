@@ -272,7 +272,7 @@ export default function DevicesPage() {
                   </div>
                 )}
               </motion.div>
-            </motion.div>
+            </section>
 
             <div className="mt-8 p-4 bg-black/5 rounded-xl border border-dashed border-black/10 overflow-auto max-h-40">
               <p className="text-[10px] font-bold mb-2 opacity-50 uppercase tracking-widest">Debug: Device State</p>
